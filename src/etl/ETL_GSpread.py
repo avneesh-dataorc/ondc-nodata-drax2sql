@@ -168,7 +168,7 @@ class GoogleSheetsETL:
             self.logger.error(f"Error fetching sheet data: {e}")
             return None
     
-    def load_pincode_data(self, spreadsheet_id: str, target_table: str = None) -> bool:
+    def load_pincode_data(self, spreadsheet_id: str,  spreadsheet_range: str, target_table: str = None) -> bool:
         """
         Load pincode data from Google Spreadsheet to database.
         
@@ -184,10 +184,11 @@ class GoogleSheetsETL:
             
             self.logger.info(f"Starting pincode data ETL process")
             self.logger.info(f"Spreadsheet ID: {spreadsheet_id}")
+            self.logger.info(f"Spreadsheet Range: {spreadsheet_range}")
             self.logger.info(f"Target table: {target_table}")
             
             # Fetch data from spreadsheet
-            df = self.fetch_sheet_data(spreadsheet_id)
+            df = self.fetch_sheet_data(spreadsheet_id, range_name=spreadsheet_range)
             if df is None or df.empty:
                 self.logger.error("Failed to fetch data or no data available")
                 return False
@@ -239,61 +240,6 @@ class GoogleSheetsETL:
             self.logger.error(f"Error in pincode data ETL process: {e}")
             return False
     
-    def load_generic_spreadsheet_data(self, spreadsheet_id: str, target_table: str, 
-                                    column_mapping: Dict[str, str] = None, truncate_first: bool = True) -> bool:
-        """
-        Load generic spreadsheet data to database with custom column mapping.
-        
-        Args:
-            spreadsheet_id: The ID of the Google Spreadsheet
-            target_table: Target table name
-            column_mapping: Dictionary mapping spreadsheet columns to database columns
-            truncate_first: Whether to truncate the table before inserting data
-            
-        Returns:
-            bool: True if successful, False otherwise
-        """
-        try:
-            self.logger.info(f"Starting generic spreadsheet data ETL process")
-            self.logger.info(f"Spreadsheet ID: {spreadsheet_id}")
-            self.logger.info(f"Target table: {target_table}")
-            
-            # Fetch data from spreadsheet
-            df = self.fetch_sheet_data(spreadsheet_id)
-            if df is None or df.empty:
-                self.logger.error("Failed to fetch data or no data available")
-                return False
-            
-            # Apply column mapping if provided
-            if column_mapping:
-                df = df.rename(columns=column_mapping)
-                self.logger.info(f"Applied column mapping: {column_mapping}")
-            
-            # Convert all columns to string and handle NaN values
-            df = df.astype(str).replace('nan', None)
-            
-            self.logger.info(f"Processed {len(df)} rows for database insertion")
-            
-            # Insert data into database
-            success = self.db_manager.bulk_insert_dataframe(
-                df, 
-                target_table, 
-                if_exists='append',
-                truncate_first=truncate_first
-            )
-            
-            if success:
-                self.logger.info(f"Successfully loaded {len(df)} records to {target_table}")
-                return True
-            else:
-                self.logger.error("Failed to insert data into database")
-                return False
-                
-        except Exception as e:
-            self.logger.error(f"Error in generic spreadsheet ETL process: {e}")
-            return False
-
-
 def run_pincode_etl():
     """
     Main function to run the pincode ETL process.
@@ -303,6 +249,7 @@ def run_pincode_etl():
         # Get configuration from environment variables
         config_dir = os.getenv('CONFIG_DIR')
         spreadsheet_id = os.getenv('SPREAD_SHEET_PIN_CODE')
+        spreadsheet_range = os.getenv('SPREAD_SHEET_PIN_CODE_RANGE')
         target_table = os.getenv('TBL_PINCODE', 'pincode_data')
         
         if not config_dir:
@@ -318,7 +265,7 @@ def run_pincode_etl():
             raise RuntimeError("Failed to authenticate with Google Sheets")
         
         # Run the ETL process
-        success = etl.load_pincode_data(spreadsheet_id, target_table)
+        success = etl.load_pincode_data(spreadsheet_id, spreadsheet_range, target_table)
         
         if success:
             print("✅ Pincode ETL process completed successfully!")
