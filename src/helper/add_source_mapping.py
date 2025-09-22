@@ -6,7 +6,6 @@ Adds a 'Sources' column with comma-separated source table names.
 """
 
 import pandas as pd
-import openpyxl
 import re
 import sys
 

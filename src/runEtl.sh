@@ -1,9 +1,10 @@
 #!/bin/bash
 
 # ETL Pipeline Runner Script
-# This script runs the ATP Order Stage pipeline for a date range
-# Usage: ./runEtl.sh [START_DATE] [END_DATE]
-# Example: ./runEtl.sh 2024-01-01 2024-01-31
+# This script runs various ETL pipelines including ATP Order Stage and Google Sheets ETL
+# Usage: ./runEtl.sh [PIPELINE_TYPE] [START_DATE] [END_DATE]
+# Example: ./runEtl.sh atp 2024-01-01 2024-01-31
+# Example: ./runEtl.sh gsheets
 
 # set -e  # Exit on any error - commented out to prevent premature exits
 
@@ -79,29 +80,64 @@ run_etl_for_date() {
     fi
 }
 
+# Function to run Google Sheets ETL
+run_gsheets_etl() {
+    local log_file="gsheets_etl_$(date +%Y%m%d_%H%M%S).log"
+    
+    print_info "Starting Google Sheets ETL process"
+    print_info "Log file: $log_file"
+    
+    # Check required environment variables
+    if [[ -z "$COFIG_DIR" ]]; then
+        print_error "COFIG_DIR environment variable is not set"
+        return 1
+    fi
+    
+    if [[ -z "$SPREAD_SHEET_PIN_CODE" ]]; then
+        print_error "SPREAD_SHEET_PIN_CODE environment variable is not set"
+        return 1
+    fi
+    
+    # Run the Google Sheets ETL script
+    if uv run -m src.etl.ETL_GSpread > "$log_file" 2>&1; then
+        print_success "Google Sheets ETL completed successfully"
+        return 0
+    else
+        print_error "Google Sheets ETL failed. Check log file: $log_file"
+        return 1
+    fi
+}
+
 # Function to show usage
 show_usage() {
-    echo "Usage: $0 [START_DATE] [END_DATE]"
+    echo "Usage: $0 [PIPELINE_TYPE] [START_DATE] [END_DATE]"
+    echo ""
+    echo "Pipeline Types:"
+    echo "  atp          ATP Order Stage pipeline (requires date range)"
+    echo "  gsheets      Google Sheets ETL pipeline (no date range needed)"
     echo ""
     echo "Arguments:"
-    echo "  START_DATE    Start date in YYYY-MM-DD format (optional, defaults to yesterday)"
-    echo "  END_DATE      End date in YYYY-MM-DD format (optional, defaults to START_DATE)"
+    echo "  PIPELINE_TYPE    Type of ETL pipeline to run (atp or gsheets)"
+    echo "  START_DATE       Start date in YYYY-MM-DD format (for ATP pipeline only)"
+    echo "  END_DATE         End date in YYYY-MM-DD format (for ATP pipeline only)"
     echo ""
     echo "Examples:"
-    echo "  $0                           # Run for yesterday only"
-    echo "  $0 2024-01-15               # Run for 2024-01-15 only"
-    echo "  $0 2024-01-01 2024-01-31    # Run for entire January 2024"
-    echo "  $0 2024-01-01 2024-01-01    # Run for single day 2024-01-01"
+    echo "  $0 gsheets                    # Run Google Sheets ETL"
+    echo "  $0 atp                        # Run ATP pipeline for yesterday only"
+    echo "  $0 atp 2024-01-15             # Run ATP pipeline for 2024-01-15 only"
+    echo "  $0 atp 2024-01-01 2024-01-31  # Run ATP pipeline for entire January 2024"
     echo ""
     echo "Notes:"
-    echo "  - Dates should be in YYYY-MM-DD format"
-    echo "  - START_DATE should be before or equal to END_DATE"
-    echo "  - Log files will be created as etl_YYYY-MM-DD.log for each date"
+    echo "  - For ATP pipeline: dates should be in YYYY-MM-DD format"
+    echo "  - For ATP pipeline: START_DATE should be before or equal to END_DATE"
+    echo "  - For ATP pipeline: log files will be created as etl_YYYY-MM-DD.log for each date"
+    echo "  - For Google Sheets ETL: ensure COFIG_DIR and SPREAD_SHEET_PIN_CODE env vars are set"
     echo "  - The script will stop on first error unless you modify the error handling"
 }
 
 # Main script logic
 main() {
+    local pipeline_type
     local start_date
     local end_date
     
@@ -111,21 +147,47 @@ main() {
         exit 0
     fi
     
-    # Set default dates
+    # Get pipeline type
     if [[ -z "$1" ]]; then
-        # Default to yesterday if no start date provided
-        start_date=$(date -d "yesterday" +%Y-%m-%d)
-        print_info "No start date provided, using yesterday: $start_date"
-    else
-        start_date="$1"
+        print_error "Pipeline type is required. Use -h or --help for usage information."
+        exit 1
     fi
     
-    if [[ -z "$2" ]]; then
-        # Default to start_date if no end date provided
-        end_date="$start_date"
-        print_info "No end date provided, using start date: $end_date"
+    pipeline_type="$1"
+    
+    # Handle Google Sheets ETL
+    if [[ "$pipeline_type" == "gsheets" ]]; then
+        print_info "Running Google Sheets ETL pipeline"
+        if run_gsheets_etl; then
+            print_success "Google Sheets ETL completed successfully!"
+            exit 0
+        else
+            print_error "Google Sheets ETL failed!"
+            exit 1
+        fi
+    fi
+    
+    # Handle ATP pipeline
+    if [[ "$pipeline_type" == "atp" ]]; then
+        # Set default dates for ATP pipeline
+        if [[ -z "$2" ]]; then
+            # Default to yesterday if no start date provided
+            start_date=$(date -d "yesterday" +%Y-%m-%d)
+            print_info "No start date provided, using yesterday: $start_date"
+        else
+            start_date="$2"
+        fi
+        
+        if [[ -z "$3" ]]; then
+            # Default to start_date if no end date provided
+            end_date="$start_date"
+            print_info "No end date provided, using start date: $end_date"
+        else
+            end_date="$3"
+        fi
     else
-        end_date="$2"
+        print_error "Invalid pipeline type: $pipeline_type. Valid options are 'atp' or 'gsheets'"
+        exit 1
     fi
     
     # Validate dates
