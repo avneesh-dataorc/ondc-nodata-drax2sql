@@ -131,6 +131,9 @@ class DatabaseManager:
             seller_np_table = get_seller_np_table()
             seller_np_table.metadata.create_all(bind=self.engine)
             
+            # Create Buyer NP table
+            buyer_np_table = get_buyer_np_table()
+            buyer_np_table.metadata.create_all(bind=self.engine)
             self.logger.info("Database tables created successfully")
             return True
         except SQLAlchemyError as e:
@@ -355,3 +358,21 @@ def get_seller_np_table():
         schema=schema
     )
 
+def get_buyer_np_table():
+    """Get Buyer NP table definition without primary key."""
+    schema = os.getenv('DB_SCHEMA', 'public')
+    table_name = os.getenv('TBL_BUYER_NP', 'buyer_np')
+    
+    return Table(
+        table_name,
+        MetaData(),
+        Column('buyer_np_name', String, nullable=True),
+        Column('buyer_np', String, nullable=True),
+        Column('updated_date', String, nullable=True),
+        Column('bnp_mask', String, nullable=True),
+        Column('domain', String, nullable=True),
+        Column('tsp_powered', String, nullable=True),
+        Column('spoc_email', String, nullable=True),
+
+        schema=schema
+    )
