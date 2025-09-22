@@ -119,6 +119,18 @@ class DatabaseManager:
             rls_buyer_table = get_rls_buyer_np_table()
             rls_buyer_table.metadata.create_all(bind=self.engine)
             
+            # Create RLS Seller NP table
+            rls_seller_table = get_rls_seller_np_table()
+            rls_seller_table.metadata.create_all(bind=self.engine)
+            
+            # Create Cancellation Code table
+            cancellation_code_table = get_cancellation_code_table()
+            cancellation_code_table.metadata.create_all(bind=self.engine)
+            
+            # Create Seller NP table
+            seller_np_table = get_seller_np_table()
+            seller_np_table.metadata.create_all(bind=self.engine)
+            
             self.logger.info("Database tables created successfully")
             return True
         except SQLAlchemyError as e:
@@ -286,6 +298,60 @@ def get_rls_buyer_np_table():
         Column('email_address', String, nullable=True),
         Column('tsp', String, nullable=True),
         Column('update_date', String, nullable=True),
+        schema=schema
+    )
+
+
+def get_rls_seller_np_table():
+    """Get RLS Seller NP table definition without primary key."""
+    schema = os.getenv('DB_SCHEMA', 'public')
+    table_name = os.getenv('TBL_RLS_SELLER_NP', 'rls_seller_np')
+    
+    return Table(
+        table_name,
+        MetaData(),
+        Column('bppid', String, nullable=True),
+        Column('email_address', String, nullable=True),
+        Column('tsp', String, nullable=True),
+        Column('update_date', String, nullable=True),
+        Column('tsp_secondary', String, nullable=True),
+        schema=schema
+    )
+
+
+def get_cancellation_code_table():
+    """Get Cancellation Code table definition without primary key."""
+    schema = os.getenv('DB_SCHEMA', 'public')
+    table_name = os.getenv('TBL_RLS_CANCEL_CODE', 'cancellation_code')
+    
+    return Table(
+        table_name,
+        MetaData(),
+        Column('code', String, nullable=True),
+        Column('reason_for_cancellation', String, nullable=True),
+        Column('is_triggers_rto', String, nullable=True),
+        Column('by', String, nullable=True),
+        Column('attributed_to', String, nullable=True),
+        Column('whether_applicable_for_part_cancel', String, nullable=True),
+        Column('sorting', String, nullable=True),
+        schema=schema
+    )
+
+
+def get_seller_np_table():
+    """Get Seller NP table definition without primary key."""
+    schema = os.getenv('DB_SCHEMA', 'public')
+    table_name = os.getenv('TBL_SELLER_NP', 'seller_np')
+    
+    return Table(
+        table_name,
+        MetaData(),
+        Column('seller_np_name', String, nullable=True),
+        Column('seller_np', String, nullable=True),
+        Column('updated_date', String, nullable=True),
+        Column('snp_mask', String, nullable=True),
+        Column('tsp_powered', String, nullable=True),
+        Column('spoc_email', String, nullable=True),
         schema=schema
     )
 
