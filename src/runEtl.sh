@@ -113,6 +113,39 @@ run_gsheets_etl() {
     fi
 }
 
+# Function to run RLS Buyer NP ETL
+run_rls_buyer_etl() {
+    local log_file="rls_buyer_etl_$(date +%Y%m%d_%H%M%S).log"
+    
+    print_info "Starting RLS Buyer NP ETL process"
+    print_info "Log file: $log_file"
+    
+    # Check required environment variables
+    if [[ -z "$CONFIG_DIR" ]]; then
+        print_error "CONFIG_DIR environment variable is not set"
+        return 1
+    fi
+    
+    if [[ -z "$SPREAD_SHEET_RLS_BUYER_NP" ]]; then
+        print_error "SPREAD_SHEET_RLS_BUYER_NP environment variable is not set"
+        return 1
+    fi
+    
+    if [[ -z "$SPREAD_SHEET_RLS_BUYER_NP_RANGE" ]]; then
+        print_error "SPREAD_SHEET_RLS_BUYER_NP_RANGE environment variable is not set"
+        return 1
+    fi
+    
+    # Run the RLS Buyer NP ETL script
+    if uv run -c "from etl.ETL_GSpread import run_rls_buyer_np_etl; run_rls_buyer_np_etl()" > "$log_file" 2>&1; then
+        print_success "RLS Buyer NP ETL completed successfully"
+        return 0
+    else
+        print_error "RLS Buyer NP ETL failed. Check log file: $log_file"
+        return 1
+    fi
+}
+
 # Function to show usage
 show_usage() {
     echo "Usage: $0 [PIPELINE_TYPE] [START_DATE] [END_DATE]"
@@ -120,14 +153,16 @@ show_usage() {
     echo "Pipeline Types:"
     echo "  atp          ATP Order Stage pipeline (requires date range)"
     echo "  gsheets      Google Sheets ETL pipeline (no date range needed)"
+    echo "  rls_buyer    RLS Buyer NP ETL pipeline (no date range needed)"
     echo ""
     echo "Arguments:"
-    echo "  PIPELINE_TYPE    Type of ETL pipeline to run (atp or gsheets)"
+    echo "  PIPELINE_TYPE    Type of ETL pipeline to run (atp, gsheets, or rls_buyer)"
     echo "  START_DATE       Start date in YYYY-MM-DD format (for ATP pipeline only)"
     echo "  END_DATE         End date in YYYY-MM-DD format (for ATP pipeline only)"
     echo ""
     echo "Examples:"
     echo "  $0 gsheets                    # Run Google Sheets ETL"
+    echo "  $0 rls_buyer                  # Run RLS Buyer NP ETL"
     echo "  $0 atp                        # Run ATP pipeline for yesterday only"
     echo "  $0 atp 2024-01-15             # Run ATP pipeline for 2024-01-15 only"
     echo "  $0 atp 2024-01-01 2024-01-31  # Run ATP pipeline for entire January 2024"
@@ -172,6 +207,18 @@ main() {
         fi
     fi
     
+    # Handle RLS Buyer NP ETL
+    if [[ "$pipeline_type" == "rls_buyer" ]]; then
+        print_info "Running RLS Buyer NP ETL pipeline"
+        if run_rls_buyer_etl; then
+            print_success "RLS Buyer NP ETL completed successfully!"
+            exit 0
+        else
+            print_error "RLS Buyer NP ETL failed!"
+            exit 1
+        fi
+    fi
+    
     # Handle ATP pipeline
     if [[ "$pipeline_type" == "atp" ]]; then
         # Set default dates for ATP pipeline
@@ -191,7 +238,7 @@ main() {
             end_date="$3"
         fi
     else
-        print_error "Invalid pipeline type: $pipeline_type. Valid options are 'atp' or 'gsheets'"
+        print_error "Invalid pipeline type: $pipeline_type. Valid options are 'atp', 'gsheets', or 'rls_buyer'"
         exit 1
     fi
     

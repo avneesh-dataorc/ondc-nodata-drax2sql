@@ -103,18 +103,22 @@ class DatabaseManager:
             self.logger.error(f"Failed to connect to database: {e}")
             return False
     
-    def create_tables(self, base_class: Any = Base) -> bool:
+    def create_tables(self) -> bool:
         """
-        Create all tables defined in the ORM models.
+        Create all tables defined in the table definitions.
         
-        Args:
-            base_class: The declarative base class containing table definitions
-            
         Returns:
             bool: True if tables created successfully, False otherwise
         """
         try:
-            base_class.metadata.create_all(bind=self.engine)
+            # Create pincode table
+            pincode_table = get_pincode_table()
+            pincode_table.metadata.create_all(bind=self.engine)
+            
+            # Create RLS Buyer NP table
+            rls_buyer_table = get_rls_buyer_np_table()
+            rls_buyer_table.metadata.create_all(bind=self.engine)
+            
             self.logger.info("Database tables created successfully")
             return True
         except SQLAlchemyError as e:
@@ -252,22 +256,36 @@ def get_db_session() -> Session:
     return get_db_manager().get_session()
 
 
-# ORM Models for different table types
-class PincodeData(Base):
-    """
-    ORM model for Pincode data table.
-    All columns are nullable text fields as specified.
-    """
-    __tablename__ = os.getenv('TBL_PINCODE', 'nodata_pincode')
-    __table_args__ = {'schema': os.getenv('DB_SCHEMA', 'public')}
+# Table definitions using SQLAlchemy Table (no primary key required)
+def get_pincode_table():
+    """Get Pincode table definition without primary key."""
+    schema = os.getenv('DB_SCHEMA', 'public')
+    table_name = os.getenv('TBL_PINCODE', 'nodata_pincode')
     
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    pincode = Column(String, nullable=True)
-    districtname = Column(String, nullable=True)
-    statename = Column(String, nullable=True)
-    tier = Column(String, nullable=True)
-    zones = Column(String, nullable=True)
+    return Table(
+        table_name,
+        MetaData(),
+        Column('pincode', String, nullable=True),
+        Column('districtname', String, nullable=True),
+        Column('statename', String, nullable=True),
+        Column('tier', String, nullable=True),
+        Column('zones', String, nullable=True),
+        schema=schema
+    )
+
+
+def get_rls_buyer_np_table():
+    """Get RLS Buyer NP table definition without primary key."""
+    schema = os.getenv('DB_SCHEMA', 'public')
+    table_name = os.getenv('TBL_RLS_BUYER_NP', 'rls_buyer_np')
     
-    def __repr__(self):
-        return f"<PincodeData(pincode='{self.pincode}', district='{self.districtname}', state='{self.statename}')>"
+    return Table(
+        table_name,
+        MetaData(),
+        Column('bapid', String, nullable=True),
+        Column('email_address', String, nullable=True),
+        Column('tsp', String, nullable=True),
+        Column('update_date', String, nullable=True),
+        schema=schema
+    )
 
