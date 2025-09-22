@@ -4,16 +4,8 @@ import logging
 import pandas as pd
 from typing import Optional, Dict, Any
 from dotenv import load_dotenv
-
-# Handle imports for both direct execution and module execution
-try:
-    from ..common.gspread_util import GoogleSheetsClient
-    from ..common.db_util import get_db_manager
-except ImportError:
-    # Add the src directory to the path for direct execution
-    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    from common.gspread_util import GoogleSheetsClient
-    from common.db_util import get_db_manager
+from common.gspread_util import GoogleSheetsClient
+from common.db_util import get_db_manager
 
 load_dotenv()
 
