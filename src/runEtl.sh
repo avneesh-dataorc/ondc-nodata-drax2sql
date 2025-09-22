@@ -88,13 +88,18 @@ run_gsheets_etl() {
     print_info "Log file: $log_file"
     
     # Check required environment variables
-    if [[ -z "$COFIG_DIR" ]]; then
-        print_error "COFIG_DIR environment variable is not set"
+    if [[ -z "$CONFIG_DIR" ]]; then
+        print_error "CONFIG_DIR environment variable is not set"
         return 1
     fi
     
     if [[ -z "$SPREAD_SHEET_PIN_CODE" ]]; then
         print_error "SPREAD_SHEET_PIN_CODE environment variable is not set"
+        return 1
+    fi
+    
+    if [[ -z "$SPREAD_SHEET_PIN_CODE_RANGE" ]]; then
+        print_error "SPREAD_SHEET_PIN_CODE_RANGE environment variable is not set"
         return 1
     fi
     
@@ -131,7 +136,7 @@ show_usage() {
     echo "  - For ATP pipeline: dates should be in YYYY-MM-DD format"
     echo "  - For ATP pipeline: START_DATE should be before or equal to END_DATE"
     echo "  - For ATP pipeline: log files will be created as etl_YYYY-MM-DD.log for each date"
-    echo "  - For Google Sheets ETL: ensure COFIG_DIR and SPREAD_SHEET_PIN_CODE env vars are set"
+    echo "  - For Google Sheets ETL: ensure CONFIG_DIR, SPREAD_SHEET_PIN_CODE, and SPREAD_SHEET_PIN_CODE_RANGE env vars are set"
     echo "  - The script will stop on first error unless you modify the error handling"
 }
 

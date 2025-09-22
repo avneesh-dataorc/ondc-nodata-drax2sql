@@ -1,53 +1,44 @@
 import os
+import sys
 import logging
 import pandas as pd
-from typing import Optional, List, Dict, Any
-from google.auth.transport.requests import Request
-from google.oauth2.credentials import Credentials
-from google_auth_oauthlib.flow import InstalledAppFlow
-from googleapiclient.discovery import build
-from googleapiclient.errors import HttpError
+from typing import Optional, Dict, Any
 from dotenv import load_dotenv
 
-from common.db_util import get_db_manager
+# Handle imports for both direct execution and module execution
+try:
+    from ..common.gspread_util import GoogleSheetsClient
+    from ..common.db_util import get_db_manager
+except ImportError:
+    # Add the src directory to the path for direct execution
+    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    from common.gspread_util import GoogleSheetsClient
+    from common.db_util import get_db_manager
 
 load_dotenv()
 
-# Google Sheets API scopes
-SCOPES = ['https://www.googleapis.com/auth/spreadsheets.readonly']
 
-
-class GoogleSheetsETL:
+class PincodeETL:
     """
-    A modular ETL class for fetching data from Google Spreadsheets and loading it into database.
-    This class handles authentication, data fetching, and database operations in a clean, reusable way.
+    ETL class for processing pincode data from Google Spreadsheets.
+    Handles data transformation, mapping, and database operations.
     """
     
     def __init__(self, config_dir: Optional[str] = None):
         """
-        Initialize the Google Sheets ETL processor.
+        Initialize the Pincode ETL processor.
         
         Args:
-            config_dir: Directory containing credentials.json and token.json files.
-                       If not provided, uses CONFIG_DIR environment variable.
+            config_dir: Directory containing Google Sheets credentials.
         """
         self.config_dir = config_dir or os.getenv('CONFIG_DIR')
-        if not self.config_dir:
-            raise ValueError("Config directory must be provided either as parameter or CONFIG_DIR env variable")
-        
-        self.credentials_path = os.path.join(self.config_dir, 'credentials.json')
-        self.token_path = os.path.join(self.config_dir, 'token.json')
-        
-        self.service = None
+        self.gsheets_client = GoogleSheetsClient(self.config_dir)
         self.db_manager = get_db_manager()
         self.logger = self._setup_logger()
-        
-        # Validate files exist
-        self._validate_config_files()
     
     def _setup_logger(self) -> logging.Logger:
         """Setup logger for ETL operations."""
-        logger = logging.getLogger(f"{__name__}.GoogleSheetsETL")
+        logger = logging.getLogger(f"{__name__}.PincodeETL")
         if not logger.handlers:
             logger.setLevel(logging.INFO)
             handler = logging.StreamHandler()
@@ -58,140 +49,18 @@ class GoogleSheetsETL:
             logger.addHandler(handler)
         return logger
     
-    def _validate_config_files(self):
-        """Validate that required configuration files exist."""
-        if not os.path.exists(self.credentials_path):
-            raise FileNotFoundError(f"Credentials file not found: {self.credentials_path}")
-        
-        self.logger.info(f"Using config directory: {self.config_dir}")
-        self.logger.info(f"Credentials file: {self.credentials_path}")
-        self.logger.info(f"Token file: {self.token_path}")
-    
-    def authenticate(self) -> bool:
+    def transform_pincode_data(self, df: pd.DataFrame) -> pd.DataFrame:
         """
-        Authenticate with Google Sheets API using OAuth2.
-        
-        Returns:
-            bool: True if authentication successful, False otherwise
-        """
-        try:
-            creds = None
-            
-            # Load existing token if available
-            if os.path.exists(self.token_path):
-                creds = Credentials.from_authorized_user_file(self.token_path, SCOPES)
-                self.logger.info("Loaded existing credentials from token file")
-            
-            # If there are no (valid) credentials available, let the user log in
-            if not creds or not creds.valid:
-                if creds and creds.expired and creds.refresh_token:
-                    creds.refresh(Request())
-                    self.logger.info("Refreshed expired credentials")
-                else:
-                    flow = InstalledAppFlow.from_client_secrets_file(
-                        self.credentials_path, SCOPES)
-                    creds = flow.run_local_server(port=0)
-                    self.logger.info("Completed OAuth2 flow for new credentials")
-                
-                # Save the credentials for the next run
-                with open(self.token_path, 'w') as token:
-                    token.write(creds.to_json())
-                self.logger.info("Saved credentials to token file")
-            
-            # Build the service
-            self.service = build('sheets', 'v4', credentials=creds)
-            self.logger.info("Google Sheets API service initialized successfully")
-            return True
-            
-        except Exception as e:
-            self.logger.error(f"Authentication failed: {e}")
-            return False
-    
-    def fetch_sheet_data(self, spreadsheet_id: str, sheet_name: str = None, 
-                        range_name: str = None) -> Optional[pd.DataFrame]:
-        """
-        Fetch data from a Google Spreadsheet.
+        Transform pincode data for database insertion.
         
         Args:
-            spreadsheet_id: The ID of the Google Spreadsheet
-            sheet_name: Name of the sheet (optional, defaults to first sheet)
-            range_name: Specific range to fetch (optional, defaults to all data)
+            df: Raw DataFrame from Google Sheets
             
         Returns:
-            pd.DataFrame: Fetched data as pandas DataFrame, or None if failed
+            pd.DataFrame: Transformed DataFrame ready for database insertion
         """
         try:
-            if not self.service:
-                raise RuntimeError("Google Sheets service not initialized. Call authenticate() first.")
-            
-            # Construct the range
-            if range_name:
-                range_to_fetch = range_name
-            elif sheet_name:
-                range_to_fetch = f"{sheet_name}!A:Z"  # Fetch all columns
-            else:
-                range_to_fetch = "A:Z"  # Default to first sheet
-            
-            self.logger.info(f"Fetching data from spreadsheet {spreadsheet_id}, range: {range_to_fetch}")
-            
-            # Call the Sheets API
-            sheet = self.service.spreadsheets()
-            result = sheet.values().get(
-                spreadsheetId=spreadsheet_id,
-                range=range_to_fetch
-            ).execute()
-            
-            values = result.get('values', [])
-            
-            if not values:
-                self.logger.warning("No data found in the specified range")
-                return pd.DataFrame()
-            
-            # Convert to DataFrame
-            # First row as column headers
-            headers = values[0] if values else []
-            data_rows = values[1:] if len(values) > 1 else []
-            
-            # Create DataFrame
-            df = pd.DataFrame(data_rows, columns=headers)
-            
-            # Clean column names (remove spaces, special characters)
-            df.columns = df.columns.str.strip().str.lower().str.replace(' ', '').str.replace('[^a-zA-Z0-9_]', '_', regex=True)
-            
-            self.logger.info(f"Successfully fetched {len(df)} rows with {len(df.columns)} columns")
-            return df
-            
-        except HttpError as e:
-            self.logger.error(f"Google Sheets API error: {e}")
-            return None
-        except Exception as e:
-            self.logger.error(f"Error fetching sheet data: {e}")
-            return None
-    
-    def load_pincode_data(self, spreadsheet_id: str,  spreadsheet_range: str, target_table: str = None) -> bool:
-        """
-        Load pincode data from Google Spreadsheet to database.
-        
-        Args:
-            spreadsheet_id: The ID of the Google Spreadsheet containing pincode data
-            target_table: Target table name (optional, uses TBL_PINCODE env var if not provided)
-            
-        Returns:
-            bool: True if successful, False otherwise
-        """
-        try:
-            target_table = target_table or os.getenv('TBL_PINCODE', 'pincode_data')
-            
-            self.logger.info(f"Starting pincode data ETL process")
-            self.logger.info(f"Spreadsheet ID: {spreadsheet_id}")
-            self.logger.info(f"Spreadsheet Range: {spreadsheet_range}")
-            self.logger.info(f"Target table: {target_table}")
-            
-            # Fetch data from spreadsheet
-            df = self.fetch_sheet_data(spreadsheet_id, range_name=spreadsheet_range)
-            if df is None or df.empty:
-                self.logger.error("Failed to fetch data or no data available")
-                return False
+            self.logger.info("Starting data transformation")
             
             # Map spreadsheet columns to database columns
             column_mapping = {
@@ -209,6 +78,7 @@ class GoogleSheetsETL:
             for col in column_mapping.values():
                 if col not in df_mapped.columns:
                     df_mapped[col] = None
+                    self.logger.warning(f"Column '{col}' not found in spreadsheet, filling with None")
             
             # Select only the columns we need
             df_final = df_mapped[list(column_mapping.values())].copy()
@@ -216,21 +86,59 @@ class GoogleSheetsETL:
             # Convert all columns to string and handle NaN values
             df_final = df_final.astype(str).replace('nan', None)
             
-            self.logger.info(f"Processed {len(df_final)} rows for database insertion")
+            self.logger.info(f"Data transformation completed. Processed {len(df_final)} rows")
+            return df_final
+            
+        except Exception as e:
+            self.logger.error(f"Error in data transformation: {e}")
+            raise
+    
+    def load_pincode_data(self, spreadsheet_id: str, spreadsheet_range: str, target_table: str = None) -> bool:
+        """
+        Load pincode data from Google Spreadsheet to database.
+        
+        Args:
+            spreadsheet_id: The ID of the Google Spreadsheet containing pincode data
+            spreadsheet_range: The range to fetch from the spreadsheet
+            target_table: Target table name (optional, uses TBL_PINCODE env var if not provided)
+            
+        Returns:
+            bool: True if successful, False otherwise
+        """
+        try:
+            target_table = target_table or os.getenv('TBL_PINCODE', 'pincode_data')
+            
+            self.logger.info(f"Starting pincode data ETL process")
+            self.logger.info(f"Spreadsheet ID: {spreadsheet_id}")
+            self.logger.info(f"Spreadsheet Range: {spreadsheet_range}")
+            self.logger.info(f"Target table: {target_table}")
+            
+            # Authenticate with Google Sheets
+            if not self.gsheets_client.authenticate():
+                raise RuntimeError("Failed to authenticate with Google Sheets")
+            
+            # Fetch data from spreadsheet
+            df = self.gsheets_client.fetch_sheet_data(spreadsheet_id, range_name=spreadsheet_range)
+            if df is None or df.empty:
+                self.logger.error("Failed to fetch data or no data available")
+                return False
+            
+            # Transform data
+            df_transformed = self.transform_pincode_data(df)
             
             # Create table if it doesn't exist
             self.db_manager.create_tables()
             
             # Insert data into database (truncate first for clean import)
             success = self.db_manager.bulk_insert_dataframe(
-                df_final, 
+                df_transformed, 
                 target_table, 
                 if_exists='append',  # Append after truncate
                 truncate_first=True  # Truncate table before inserting
             )
             
             if success:
-                self.logger.info(f"Successfully loaded {len(df_final)} pincode records to {target_table}")
+                self.logger.info(f"Successfully loaded {len(df_transformed)} pincode records to {target_table}")
                 return True
             else:
                 self.logger.error("Failed to insert data into database")
@@ -240,6 +148,8 @@ class GoogleSheetsETL:
             self.logger.error(f"Error in pincode data ETL process: {e}")
             return False
     
+
+
 def run_pincode_etl():
     """
     Main function to run the pincode ETL process.
@@ -256,26 +166,24 @@ def run_pincode_etl():
             raise ValueError("CONFIG_DIR environment variable is required")
         if not spreadsheet_id:
             raise ValueError("SPREAD_SHEET_PIN_CODE environment variable is required")
+        if not spreadsheet_range:
+            raise ValueError("SPREAD_SHEET_PIN_CODE_RANGE environment variable is required")
         
         # Initialize ETL processor
-        etl = GoogleSheetsETL(config_dir)
-        
-        # Authenticate with Google Sheets
-        if not etl.authenticate():
-            raise RuntimeError("Failed to authenticate with Google Sheets")
+        etl = PincodeETL(config_dir)
         
         # Run the ETL process
         success = etl.load_pincode_data(spreadsheet_id, spreadsheet_range, target_table)
         
         if success:
-            print("✅ Pincode ETL process completed successfully!")
+            print("Pincode ETL process completed successfully!")
             return True
         else:
-            print("❌ Pincode ETL process failed!")
+            print("Pincode ETL process failed!")
             return False
             
     except Exception as e:
-        print(f"❌ Error in pincode ETL process: {e}")
+        print(f"Error in pincode ETL process: {e}")
         return False
 
 
