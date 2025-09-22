@@ -1,0 +1,8 @@
+.venv/
+uv.lock
+.DS_Store
+.env
+__pycache__/
+*.pbix
+.python-version
+drax/
