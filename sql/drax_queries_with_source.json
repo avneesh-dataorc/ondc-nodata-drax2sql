@@ -1,926 +1,978 @@
 [
-    {
-      "Table_name": "order_measures",
-      "Measures_Name": "Confirmed",
-      "Sources": "Ordernhm",
-      "Measures": "Sum(Ordernhm[no_key])"
-    },
-    {
-      "Table_name": "order_measures",
-      "Measures_Name": "Delivered",
-      "Sources": "Ordernhm",
-      "Measures": "CALCULATE(\n    Sum(Ordernhm[no_key]),\n    Ordernhm[ONDC order_status] = \"Delivered\")"
-    },
-    {
-      "Table_name": "order_measures",
-      "Measures_Name": "Cancelled",
-      "Sources": "Ordernhm",
-      "Measures": "CALCULATE(\n    Sum(Ordernhm[no_key]),\n    Ordernhm[ONDC order_status] = \"Cancelled\")"
-    },
-    {
-      "Table_name": "order_measures",
-      "Measures_Name": "In Process",
-      "Sources": "Ordernhm",
-      "Measures": "CALCULATE(\n    Sum(Ordernhm[no_key]),\n    Ordernhm[ONDC order_status] = \"In Process\")"
-    },
-    {
-      "Table_name": "order_measures",
-      "Measures_Name": "Part Delivered",
-      "Sources": "Ordernhm",
-      "Measures": "CALCULATE(\n    Sum(Ordernhm[no_key]),\n    FILTER(Ordernhm,Ordernhm[ONDC order_status] = \"Part Delivered\")\n)"
-    },
-    {
-      "Table_name": "order_measures",
-      "Measures_Name": "Buyer cancel",
-      "Sources": "Ordernhm, Cancellation code",
-      "Measures": "CALCULATE(\n   [Cancelled],\n   Ordernhm[ONDC order_status]=\"Cancelled\",\n   RELATEDTABLE('Cancellation code'),'Cancellation code'[attributed to]=\"Buyer app\")"
-    },
-    {
-      "Table_name": "order_measures",
-      "Measures_Name": "Seller cancel",
-      "Sources": "Ordernhm, Cancellation code",
-      "Measures": "CALCULATE(\n   Sum(Ordernhm[no_key]),\n   Ordernhm[ONDC order_status]=\"Cancelled\",\n   RELATEDTABLE('Cancellation code'),'Cancellation code'[attributed to]= \"Seller app\")"
-    },
-    {
-      "Table_name": "order_measures",
-      "Measures_Name": "Logistic cancel",
-      "Sources": "Ordernhm, Cancellation code",
-      "Measures": "CALCULATE(\n   Sum(Ordernhm[no_key]),\n   Ordernhm[ONDC order_status]=\"Cancelled\",\n   RELATEDTABLE('Cancellation code'),'Cancellation code'[attributed to]=\"Logistics Provider\")"
-    },
-    {
-      "Table_name": "order_measures",
-      "Measures_Name": "Fill Rate",
-      "Sources": "",
-      "Measures": "DIVIDE([Confirmed] - [Seller cancel],[Confirmed])"
-    },
-    {
-      "Table_name": "order_measures",
-      "Measures_Name": "Seller NP",
-      "Sources": "Ordernhm, Seller NP",
-      "Measures": "DISTINCTCOUNT(Ordernhm[Seller NP])"
-    },
-    {
-      "Table_name": "order_measures",
-      "Measures_Name": "Buyer NP",
-      "Sources": "Ordernhm",
-      "Measures": "DISTINCTCOUNT(Ordernhm[Buyer NP])"
-    },
-    {
-      "Table_name": "order_measures",
-      "Measures_Name": "Delivery %",
-      "Sources": "",
-      "Measures": "DIVIDE(\n   [Delivered],\n   [Confirmed],BLANK()\n)"
-    },
-    {
-      "Table_name": "order_measures",
-      "Measures_Name": "Order growth",
-      "Sources": "Ordernhm",
-      "Measures": "VAR lastdt =\nCALCULATE(\n   Sum(Ordernhm[no_key]),DATEADD(Ordernhm[Date],-1,DAY))\nVAR growth =\nDIVIDE((Sum(Ordernhm[no_key])-lastdt),lastdt)\nRETURN growth"
-    },
-    {
-      "Table_name": "order_measures",
-      "Measures_Name": "Active seller",
-      "Sources": "Ordernhm",
-      "Measures": "CALCULATE(\n   DISTINCTCOUNT(Ordernhm[provider key]),\n   DATESMTD(Ordernhm[Date])\n)"
-    },
-    {
-      "Table_name": "order_measures",
-      "Measures_Name": "Active buyer",
-      "Sources": "Ordernhm, dimdate",
-      "Measures": "CALCULATE(\n   DISTINCTCOUNT(Ordernhm[Buyer NP]),\n   DATESMTD(dimdate[Date])\n)"
-    },
-    {
-      "Table_name": "order_measures",
-      "Measures_Name": "Seller Cancel %",
-      "Sources": "",
-      "Measures": "DIVIDE([Seller cancel],[Confirmed]\n,\"-\")"
-    },
-    {
-      "Table_name": "order_measures",
-      "Measures_Name": "Cancellation code cal",
-      "Sources": "Ordernhm",
-      "Measures": "COUNT(Ordernhm[cancellation_code])"
-    },
-    {
-      "Table_name": "order_measures",
-      "Measures_Name": "Cancel code share",
-      "Sources": "Cancellation code",
-      "Measures": "DIVIDE([Cancellation code cal],[Confirmed all])"
-    },
-    {
-      "Table_name": "order_measures",
-      "Measures_Name": "Cities with Active Sellers (MTD)",
-      "Sources": "Ordernhm, dimdate",
-      "Measures": "CALCULATE(\n   DISTINCTCOUNT(Ordernhm[Seller City]),\n   DATESMTD(dimdate[Date])\n)"
-    },
-    {
-      "Table_name": "order_measures",
-      "Measures_Name": "Active Delivery Cities (MTD)",
-      "Sources": "Ordernhm, dimdate",
-      "Measures": "CALCULATE(\n   DISTINCTCOUNT(Ordernhm[Delivery City]),\n   DATESMTD(dimdate[Date])\n)"
-    },
-    {
-      "Table_name": "order_measures",
-      "Measures_Name": "Tat breach %",
-      "Sources": "Ordernhm",
-      "Measures": "var buy_can_breach = CALCULATE([Buyer cancel],FILTER(Ordernhm,Ordernhm[Breach]=0))\nvar base = [Confirmed]-[Seller cancel]-[Logistic cancel] - buy_can_breach\nreturn\nDivide([Tat breach],base,BLANK())"
-    },
-    {
-      "Table_name": "order_measures",
-      "Measures_Name": "Tat breach",
-      "Sources": "Ordernhm",
-      "Measures": "SUMX(Ordernhm,Ordernhm[Breach])"
-    },
-    {
-      "Table_name": "order_measures",
-      "Measures_Name": "Promised TAT breach",
-      "Sources": "Ordernhm",
-      "Measures": "VAR Breach = CALCULATE(SUMX(Ordernhm,IF(Ordernhm[ONDC order_status] = \"Delivered\" && Ordernhm[Updated at]>Ordernhm[Promised time] || Ordernhm[ONDC order_status] = \"Cancelled\" && Ordernhm[Updated at]>Ordernhm[Promised time] || Ordernhm[ONDC order_status] = \"In Process\" && TODAY()>Ordernhm[Promised time],1,0)))\nReturn\nIF(Breach = 1, \"Yes\",\"No\")"
-    },
-    {
-      "Table_name": "order_measures",
-      "Measures_Name": "Breach (mins)",
-      "Sources": "Ordernhm",
-      "Measures": "CALCULATE(AVERAGEX(Ordernhm,\nIF(Ordernhm[ONDC order_status] = \"Delivered\", DATEDIFF(Ordernhm[Promised time],Ordernhm[Updated at],SECOND)/60,\nIF(Ordernhm[ONDC order_status] = \"Cancelled\", DATEDIFF(Ordernhm[Promised time],Ordernhm[Updated at],SECOND)/60,\nIF(Ordernhm[ONDC order_status] = \"In Process\", DATEDIFF(Ordernhm[Promised time],TODAY(),SECOND)/60,\nBLANK())))))"
-    },
-    {
-      "Table_name": "order_measures",
-      "Measures_Name": "Breach (hrs)",
-      "Sources": "Ordernhm",
-      "Measures": "CALCULATE(AVERAGEX(Ordernhm,\nIF(Ordernhm[ONDC order_status] = \"Delivered\", DATEDIFF(Ordernhm[Promised time],Ordernhm[Updated at],SECOND)/3600,\nIF(Ordernhm[ONDC order_status] = \"Cancelled\", DATEDIFF(Ordernhm[Promised time],Ordernhm[Updated at],SECOND)/3600,\nIF(Ordernhm[ONDC order_status] = \"In Process\", DATEDIFF(Ordernhm[Promised time],TODAY(),SECOND)/3600,\nBLANK())))))"
-    },
-    {
-      "Table_name": "order_measures",
-      "Measures_Name": "Breach (days)",
-      "Sources": "Ordernhm",
-      "Measures": "CALCULATE(AVERAGEX(Ordernhm,\nIF(Ordernhm[ONDC order_status] = \"Delivered\", DATEDIFF(Ordernhm[Promised time],Ordernhm[Updated at],SECOND)/86400,\nIF(Ordernhm[ONDC order_status] = \"Cancelled\", DATEDIFF(Ordernhm[Promised time],Ordernhm[Updated at],SECOND)/86400,\nIF(Ordernhm[ONDC order_status] = \"In Process\", DATEDIFF(Ordernhm[Promised time],TODAY(),SECOND)/86400,\nBLANK())))))"
-    },
-    {
-      "Table_name": "order_measures",
-      "Measures_Name": "Provider id (MTD)",
-      "Sources": "Ordernhm, dimdate",
-      "Measures": "CALCULATE(\n   DISTINCTCOUNT('Ordernhm'[provider key]),\n   DATESMTD(dimdate[Date])\n)"
-    },
-    {
-      "Table_name": "order_measures",
-      "Measures_Name": "Average Retail OPD",
-      "Sources": "Ordernhm",
-      "Measures": "DIVIDE([Confirmed],DISTINCTCOUNT(Ordernhm[Date]))"
-    },
-    {
-      "Table_name": "order_measures",
-      "Measures_Name": "Inter NP",
-      "Sources": "Ordernhm",
-      "Measures": "CALCULATE(Sum(Ordernhm[no_key]),Ordernhm[Order type]=\"Inter NP\")"
-    },
-    {
-      "Table_name": "order_measures",
-      "Measures_Name": "Intra NP",
-      "Sources": "Ordernhm",
-      "Measures": "CALCULATE(Sum(Ordernhm[no_key]),Ordernhm[Order type]=\"Intra NP\")"
-    },
-    {
-      "Table_name": "order_measures",
-      "Measures_Name": "Social Sellers on a day",
-      "Sources": "Ordernhm, Social",
-      "Measures": "CALCULATE(DISTINCTCOUNT(Ordernhm[provider key]),Ordernhm[Sector]=\"Social\")"
-    },
-    {
-      "Table_name": "order_measures",
-      "Measures_Name": "G sheet",
-      "Sources": "Social, Seller NP",
-      "Measures": "CALCULATE(DISTINCTCOUNT(Social[Key3]),ALLSELECTED(Social[Seller NP (Provided by Expansion)]))"
-    },
-    {
-      "Table_name": "order_measures",
-      "Measures_Name": "Logistic Cancel %",
-      "Sources": "",
-      "Measures": "DIVIDE([Logistic cancel],[Confirmed],\"-\")"
-    },
-    {
-      "Table_name": "order_measures",
-      "Measures_Name": "Social Cred Orders",
-      "Sources": "Social, cred",
-      "Measures": "CALCULATE([Confirmed],cred[cred_code] = \"Social Sector\")"
-    },
-    {
-      "Table_name": "order_measures",
-      "Measures_Name": "Social Orders Current",
-      "Sources": "Ordernhm, Social",
-      "Measures": "CALCULATE([Confirmed],Ordernhm[Sector] = \"Social\")"
-    },
-    {
-      "Table_name": "order_measures",
-      "Measures_Name": "Difference in Social Orders",
-      "Sources": "Social, cred",
-      "Measures": "[Social Orders Current] - [Social Cred Orders]"
-    },
-    {
-      "Table_name": "order_measures",
-      "Measures_Name": "Delivered with TAT",
-      "Sources": "Ordernhm",
-      "Measures": "CALCULATE([Delivered],FILTER(Ordernhm,Ordernhm[Breach]=0))"
-    },
-    {
-      "Table_name": "order_measures",
-      "Measures_Name": "Delivered beyond TAT",
-      "Sources": "Ordernhm",
-      "Measures": "CALCULATE([Delivered],FILTER(Ordernhm,Ordernhm[Breach]=1))"
-    },
-    {
-      "Table_name": "order_measures",
-      "Measures_Name": "Delivered Breached only",
-      "Sources": "Ordernhm",
-      "Measures": "var a=\nCALCULATE(sum(Ordernhm[no_key]), Ordernhm[ONDC order_status] = \"Delivered\" && Ordernhm[Breach]=1)\nvar del=\nCALCULATE(sum(Ordernhm[no_key]), Ordernhm[ONDC order_status] = \"Delivered\" )\nvar buy_can = CALCULATE([Buyer cancel],Ordernhm[Shipped at]<>BLANK())\nvar log_can = CALCULATE([Logistic cancel],Ordernhm[Shipped at]<>BLANK())\nvar inproc = CALCULATE([In Process],Ordernhm[Shipped at]<>BLANK())\nReturn\nDIVIDE(a,(del+buy_can+log_can+inproc))"
-    },
-    {
-      "Table_name": "order_measures",
-      "Measures_Name": "DBO",
-      "Sources": "Ordernhm",
-      "Measures": "CALCULATE(\n   SUM(Ordernhm[no_key]),\n   FILTER(\n       Ordernhm,\n       Ordernhm[ONDC order_status] = \"Delivered\"\n           && Ordernhm[Updated at] <= Ordernhm[Promised time]\n           && NOT(ISBLANK(Ordernhm[Updated at]))\n   )\n)"
-    },
-    {
-      "Table_name": "Delivery ageing measures",
-      "Measures_Name": "Non F&B days diff",
-      "Sources": "Ordernhm",
-      "Measures": "CALCULATE(AVERAGEX(FILTER(Ordernhm,Ordernhm[ONDC order_status]=\"Delivered\" && Ordernhm[Category] <> \"F&B\"),DATEDIFF(Ordernhm[Created at],Ordernhm[Updated at],DAY))\n)"
-    },
-    {
-      "Table_name": "Delivery ageing measures",
-      "Measures_Name": "Same Day",
-      "Sources": "Ordernhm",
-      "Measures": "CALCULATE(\n   SUM(Ordernhm[no_key]),\n    Ordernhm[day_diff] = 0 && Ordernhm[ONDC order_status]=\"Delivered\")"
-    },
-    {
-      "Table_name": "Delivery ageing measures",
-      "Measures_Name": "Next Day",
-      "Sources": "Ordernhm",
-      "Measures": "CALCULATE(\n   COUNTROWS(Ordernhm),\n   Ordernhm[day_diff] = 1 && Ordernhm[ONDC order_status]=\"Delivered\")"
-    },
-    {
-      "Table_name": "Delivery ageing measures",
-      "Measures_Name": "Day + 2",
-      "Sources": "Ordernhm",
-      "Measures": "CALCULATE(\n   COUNTROWS(Ordernhm),\n   Ordernhm[day_diff] = 2 && Ordernhm[ONDC order_status]=\"Delivered\")"
-    },
-    {
-      "Table_name": "Delivery ageing measures",
-      "Measures_Name": "Confirmed all",
-      "Sources": "Ordernhm, dimdate, Seller NP",
-      "Measures": "CALCULATE(\n   COUNTROWS(Ordernhm),\n   ALLEXCEPT(Ordernhm,Ordernhm[Category],Ordernhm[ONDC order_status],'Ordernhm'[Delivery Type],'Seller NP'[seller_np],dimdate[Date])\n)"
-    },
-    {
-      "Table_name": "Delivery ageing measures",
-      "Measures_Name": "More than 2 Days",
-      "Sources": "Ordernhm",
-      "Measures": "CALCULATE(\n   COUNTROWS(Ordernhm),\n   Ordernhm[day_diff] > 2 && Ordernhm[ONDC order_status]=\"Delivered\")"
-    },
-    {
-      "Table_name": "Delivery ageing measures",
-      "Measures_Name": "Same Day %",
-      "Sources": "",
-      "Measures": "DIVIDE([Same Day],[Delivered],\"-\")"
-    },
-    {
-      "Table_name": "Delivery ageing measures",
-      "Measures_Name": "Next Day %",
-      "Sources": "",
-      "Measures": "DIVIDE([Next Day],[Delivered],\"-\")"
-    },
-    {
-      "Table_name": "Delivery ageing measures",
-      "Measures_Name": "Day + 2 %",
-      "Sources": "",
-      "Measures": "DIVIDE([Day + 2],[Delivered],\"-\")"
-    },
-    {
-      "Table_name": "Delivery ageing measures",
-      "Measures_Name": "More than 2 Day %",
-      "Sources": "",
-      "Measures": "DIVIDE([More than 2 Days],[Delivered],\"-\")"
-    },
-    {
-      "Table_name": "Delivery ageing measures",
-      "Measures_Name": "F&B mins diff",
-      "Sources": "Ordernhm",
-      "Measures": "CALCULATE(AVERAGEX(Ordernhm,\n   DATEDIFF([Created at],[Updated at],MINUTE)),\n   FILTER(Ordernhm,Ordernhm[Category] = \"F&B\"),\n   FILTER(Ordernhm,[ONDC order_status]=\"Delivered\")\n)"
-    },
-    {
-      "Table_name": "Delivery ageing measures",
-      "Measures_Name": "30 - 45 mins",
-      "Sources": "Ordernhm",
-      "Measures": "CALCULATE(\n   Sum(Ordernhm[no_key]),\n   Ordernhm[min_diff] > 30 &&  Ordernhm[min_diff]<=45,Ordernhm[ONDC order_status]=\"Delivered\" && Ordernhm[Category]=\"F&B\")"
-    },
-    {
-      "Table_name": "Delivery ageing measures",
-      "Measures_Name": "45 - 60 mins",
-      "Sources": "Ordernhm",
-      "Measures": "CALCULATE(\n   Sum(Ordernhm[no_key]),\n   Ordernhm[min_diff] > 45 &&  Ordernhm[min_diff]<=60 && Ordernhm[ONDC order_status]=\"Delivered\" && Ordernhm[Category]=\"F&B\")"
-    },
-    {
-      "Table_name": "Delivery ageing measures",
-      "Measures_Name": "60 - 120 mins",
-      "Sources": "Ordernhm",
-      "Measures": "CALCULATE(\n   COUNTROWS(Ordernhm),\n   Ordernhm[min_diff] > 60 &&  Ordernhm[min_diff]<=120 && Ordernhm[ONDC order_status]=\"Delivered\" && Ordernhm[Category]=\"F&B\")"
-    },
-    {
-      "Table_name": "Delivery ageing measures",
-      "Measures_Name": "Above 120 mins",
-      "Sources": "Ordernhm",
-      "Measures": "CALCULATE(\n   COUNTROWS(Ordernhm),\n   Ordernhm[min_diff] >120 && Ordernhm[ONDC order_status]=\"Delivered\" && Ordernhm[Category]=\"F&B\")"
-    },
-    {
-      "Table_name": "Delivery ageing measures",
-      "Measures_Name": "45 - 60 mins %",
-      "Sources": "",
-      "Measures": "DIVIDE([45 - 60 mins],[Delivered],BLANK())"
-    },
-    {
-      "Table_name": "Delivery ageing measures",
-      "Measures_Name": "60 - 120 mins %",
-      "Sources": "",
-      "Measures": "DIVIDE ([60 - 120 mins],[Delivered],BLANK())"
-    },
-    {
-      "Table_name": "Delivery ageing measures",
-      "Measures_Name": "30 - 45 mins %",
-      "Sources": "",
-      "Measures": "DIVIDE ([30 - 45 mins],[Delivered],BLANK())"
-    },
-    {
-      "Table_name": "Delivery ageing measures",
-      "Measures_Name": "Above 120 mins %",
-      "Sources": "",
-      "Measures": "DIVIDE([Above 120 mins],[Delivered],BLANK())"
-    },
-    {
-      "Table_name": "Delivery ageing measures",
-      "Measures_Name": "On time deliveries",
-      "Sources": "Ordernhm",
-      "Measures": "SUM(Ordernhm[on-time-del])"
-    },
-    {
-      "Table_name": "Delivery ageing measures",
-      "Measures_Name": "On time delivered %",
-      "Sources": "Ordernhm",
-      "Measures": "var buy_can_breach = CALCULATE([Buyer cancel],Ordernhm[Breach]=0)\nvar base = [Confirmed]-[Seller cancel]-[Logistic cancel] - buy_can_breach\nreturn\nDivide([On time deliveries],base,BLANK())"
-    },
-    {
-      "Table_name": "Delivery ageing measures",
-      "Measures_Name": "Average TAT (in mins)",
-      "Sources": "Ordernhm",
-      "Measures": "AVERAGEX(FILTER(Ordernhm,Ordernhm[ONDC order_status]=\"Delivered\"),[tat_time])"
-    },
-    {
-      "Table_name": "Delivery ageing measures",
-      "Measures_Name": "Average TAT (in days)",
-      "Sources": "Ordernhm",
-      "Measures": "DIVIDE(AVERAGEX(FILTER(Ordernhm,Ordernhm[ONDC order_status]=\"Delivered\"),[tat_time]),1440)"
-    },
-    {
-      "Table_name": "Delivery ageing measures",
-      "Measures_Name": "Average TAT (in hrs)",
-      "Sources": "",
-      "Measures": "[Average TAT (in mins)]/60"
-    },
-    {
-      "Table_name": "Delivery ageing measures",
-      "Measures_Name": "Avg Delivery (hrs)",
-      "Sources": "Ordernhm",
-      "Measures": "DIVIDE(CALCULATE(AVERAGEX(FILTER(Ordernhm,Ordernhm[ONDC order_status]=\"Delivered\" && [min_diff]>0),[min_diff])),60)"
-    },
-    {
-      "Table_name": "Delivery ageing measures",
-      "Measures_Name": "Avg Delivery (mins)",
-      "Sources": "Ordernhm",
-      "Measures": "CALCULATE(AVERAGEX(FILTER(Ordernhm,Ordernhm[ONDC order_status]=\"Delivered\" && [min_diff]>0),[min_diff]))"
-    },
-    {
-      "Table_name": "Delivery ageing measures",
-      "Measures_Name": "Avg Delivery (days)",
-      "Sources": "Ordernhm",
-      "Measures": "DIVIDE(CALCULATE(AVERAGEX(FILTER(Ordernhm,Ordernhm[ONDC order_status]=\"Delivered\" && [min_diff]>0),[min_diff])),1440)"
-    },
-    {
-      "Table_name": "Delivery ageing measures",
-      "Measures_Name": "15 - 30 mins",
-      "Sources": "Ordernhm",
-      "Measures": "CALCULATE(\n   Sum(Ordernhm[no_key]),\n   Ordernhm[min_diff] > 15 &&  Ordernhm[min_diff]<=30,Ordernhm[ONDC order_status]=\"Delivered\" && Ordernhm[Category]=\"F&B\")"
-    },
-    {
-      "Table_name": "Delivery ageing measures",
-      "Measures_Name": "Within 15 mins",
-      "Sources": "Ordernhm",
-      "Measures": "CALCULATE(\n   Sum(Ordernhm[no_key]),\n   Ordernhm[min_diff]<=15,Ordernhm[ONDC order_status]=\"Delivered\" && Ordernhm[Category]=\"F&B\")"
-    },
-    {
-      "Table_name": "Delivery ageing measures",
-      "Measures_Name": "15 - 30 mins %",
-      "Sources": "",
-      "Measures": "DIVIDE([15 - 30 mins],[Delivered],BLANK())"
-    },
-    {
-      "Table_name": "Delivery ageing measures",
-      "Measures_Name": "Within 15 mins %",
-      "Sources": "",
-      "Measures": "DIVIDE([Within 15 mins],[Delivered],BLANK())"
-    },
-    {
-      "Table_name": "TAT measures",
-      "Measures_Name": "TAT+1",
-      "Sources": "Ordernhm",
-      "Measures": "CALCULATE([Delivered],\n   FILTER(Ordernhm,Ordernhm[tat_diff_days] = 1))"
-    },
-    {
-      "Table_name": "TAT measures",
-      "Measures_Name": "TAT + 2",
-      "Sources": "Ordernhm",
-      "Measures": "CALCULATE([Delivered],\n   FILTER(Ordernhm,Ordernhm[tat_diff_days] = 2))"
-    },
-    {
-      "Table_name": "TAT measures",
-      "Measures_Name": "TAT + 3",
-      "Sources": "Ordernhm",
-      "Measures": "CALCULATE([Delivered],\n   FILTER(Ordernhm,Ordernhm[tat_diff_days] = 3))"
-    },
-    {
-      "Table_name": "TAT measures",
-      "Measures_Name": "TAT + 4",
-      "Sources": "Ordernhm",
-      "Measures": "CALCULATE([Delivered],\n   FILTER(Ordernhm,Ordernhm[tat_diff_days] = 4))"
-    },
-    {
-      "Table_name": "TAT measures",
-      "Measures_Name": "TAT > 4",
-      "Sources": "Ordernhm",
-      "Measures": "CALCULATE([Delivered],\n   FILTER(Ordernhm,Ordernhm[tat_diff_days] > 4))"
-    },
-    {
-      "Table_name": "TAT measures",
-      "Measures_Name": "TAT+1 %",
-      "Sources": "",
-      "Measures": "DIVIDE([TAT+1],[Confirmed],BLANK())"
-    },
-    {
-      "Table_name": "TAT measures",
-      "Measures_Name": "TAT + 2 %",
-      "Sources": "",
-      "Measures": "DIVIDE([TAT + 2],[Confirmed],BLANK())"
-    },
-    {
-      "Table_name": "TAT measures",
-      "Measures_Name": "TAT + 3 %",
-      "Sources": "",
-      "Measures": "DIVIDE([TAT + 3],[Confirmed],BLANK())"
-    },
-    {
-      "Table_name": "TAT measures",
-      "Measures_Name": "TAT + 4 %",
-      "Sources": "",
-      "Measures": "DIVIDE([TAT + 4],[Confirmed],BLANK())"
-    },
-    {
-      "Table_name": "TAT measures",
-      "Measures_Name": "TAT > 4 %",
-      "Sources": "",
-      "Measures": "DIVIDE([TAT > 4],[Confirmed],BLANK())"
-    },
-    {
-      "Table_name": "TAT measures",
-      "Measures_Name": "TAT < 1",
-      "Sources": "Ordernhm",
-      "Measures": "CALCULATE(SUMX(\n   FILTER(Ordernhm,[ONDC order_status]=\"Delivered\"),\n   IF(AND(DATEDIFF(Ordernhm[Promised time],Ordernhm[Updated at],HOUR)< 24,\n   DATEDIFF(Ordernhm[Promised time],Ordernhm[Updated at],HOUR)>0),1,0)))"
-    },
-    {
-      "Table_name": "TAT measures",
-      "Measures_Name": "TAT 0-6 hrs",
-      "Sources": "Ordernhm",
-      "Measures": "CALCULATE([Delivered],FILTER(Ordernhm,\n   Ordernhm[tat_dif]>0 && Ordernhm[tat_dif]<=21600))"
-    },
-    {
-      "Table_name": "TAT measures",
-      "Measures_Name": "TAT 6-12 hrs",
-      "Sources": "Ordernhm",
-      "Measures": "CALCULATE([Delivered],\n    FILTER(Ordernhm,Ordernhm[tat_dif]>21600 &&\n   Ordernhm[tat_dif]<=43200))"
-    },
-    {
-      "Table_name": "TAT measures",
-      "Measures_Name": "TAT 12-24 hrs",
-      "Sources": "Ordernhm",
-      "Measures": "CALCULATE([Delivered],\n   ( FILTER(Ordernhm,Ordernhm[tat_dif]>43200 &&\n   Ordernhm[tat_dif]<=86400)))"
-    },
-    {
-      "Table_name": "TAT measures",
-      "Measures_Name": "TAT 24-48 hrs",
-      "Sources": "Ordernhm",
-      "Measures": "CALCULATE([Delivered],\n    FILTER(Ordernhm,Ordernhm[tat_dif]>86400 && Ordernhm[tat_dif]<=172800))"
-    },
-    {
-      "Table_name": "TAT measures",
-      "Measures_Name": "TAT >48 hrs",
-      "Sources": "Ordernhm",
-      "Measures": "CALCULATE([Delivered],\n   Ordernhm[tat_dif]>172800)"
-    },
-    {
-      "Table_name": "TAT measures",
-      "Measures_Name": "TAT 0-6 hrs %",
-      "Sources": "",
-      "Measures": "DIVIDE(\n   [TAT 0-6 hrs],[Confirmed],BLANK())"
-    },
-    {
-      "Table_name": "TAT measures",
-      "Measures_Name": "TAT 6-12 hrs%",
-      "Sources": "",
-      "Measures": "DIVIDE(\n   [TAT 6-12 hrs],[Confirmed],BLANK())"
-    },
-    {
-      "Table_name": "TAT measures",
-      "Measures_Name": "TAT 12-24 hrs%",
-      "Sources": "",
-      "Measures": "DIVIDE(\n   [TAT 12-24 hrs],[Confirmed],BLANK())"
-    },
-    {
-      "Table_name": "TAT measures",
-      "Measures_Name": "TAT 24-48 hrs%",
-      "Sources": "",
-      "Measures": "DIVIDE(\n   [TAT 24-48 hrs],[Confirmed],BLANK())"
-    },
-    {
-      "Table_name": "TAT measures",
-      "Measures_Name": "TAT >48 hrs%",
-      "Sources": "",
-      "Measures": "DIVIDE(\n   [TAT >48 hrs],[Confirmed],BLANK())"
-    },
-    {
-      "Table_name": "TAT measures",
-      "Measures_Name": "TAT < 5 mins",
-      "Sources": "Ordernhm",
-      "Measures": "CALCULATE([Delivered],\n    FILTER(Ordernhm,Ordernhm[tat_dif]>0 &&\n   Ordernhm[tat_dif]<=300))"
-    },
-    {
-      "Table_name": "TAT measures",
-      "Measures_Name": "TAT 5-15 mins",
-      "Sources": "Ordernhm",
-      "Measures": "CALCULATE([Delivered],\n   FILTER(Ordernhm,Ordernhm[tat_dif]>300 && Ordernhm[tat_dif]<=900))"
-    },
-    {
-      "Table_name": "TAT measures",
-      "Measures_Name": "TAT 15-30 mins",
-      "Sources": "Ordernhm",
-      "Measures": "CALCULATE([Delivered],\n    FILTER(Ordernhm,Ordernhm[tat_dif]>900 &&\n   Ordernhm[tat_dif]<=1800))"
-    },
-    {
-      "Table_name": "TAT measures",
-      "Measures_Name": "TAT 30-60 mins",
-      "Sources": "Ordernhm",
-      "Measures": "CALCULATE([Delivered],\n    FILTER(Ordernhm,Ordernhm[tat_dif]>1800 &&\n   Ordernhm[tat_dif]<=3600))"
-    },
-    {
-      "Table_name": "TAT measures",
-      "Measures_Name": "TAT > 60 mins",
-      "Sources": "Ordernhm",
-      "Measures": "CALCULATE([Delivered],\n   Ordernhm[tat_dif]>3600)"
-    },
-    {
-      "Table_name": "TAT measures",
-      "Measures_Name": "TAT < 5 mins%",
-      "Sources": "",
-      "Measures": "DIVIDE([TAT < 5 mins],[Confirmed],BLANK())"
-    },
-    {
-      "Table_name": "TAT measures",
-      "Measures_Name": "TAT > 60 mins%",
-      "Sources": "",
-      "Measures": "DIVIDE([TAT > 60 mins],[Confirmed],BLANK())"
-    },
-    {
-      "Table_name": "TAT measures",
-      "Measures_Name": "TAT 15-30 mins%",
-      "Sources": "",
-      "Measures": "DIVIDE([TAT 15-30 mins],[Confirmed],BLANK())"
-    },
-    {
-      "Table_name": "TAT measures",
-      "Measures_Name": "TAT 30-60 mins%",
-      "Sources": "",
-      "Measures": "DIVIDE([TAT 30-60 mins],[Confirmed],BLANK())"
-    },
-    {
-      "Table_name": "TAT measures",
-      "Measures_Name": "TAT 5-15 mins%",
-      "Sources": "",
-      "Measures": "DIVIDE([TAT 5-15 mins],[Confirmed],BLANK())"
-    },
-    {
-      "Table_name": "TAT measures",
-      "Measures_Name": "TAT (Same day)",
-      "Sources": "Ordernhm",
-      "Measures": "CALCULATE([Delivered],\n   FILTER(Ordernhm,Ordernhm[tat_diff_days] < 1 &&\n   Ordernhm[Promised time]< Ordernhm[Updated at]))"
-    },
-    {
-      "Table_name": "TAT measures",
-      "Measures_Name": "TAT(Same Day) %",
-      "Sources": "",
-      "Measures": "DIVIDE([TAT (Same day)],[Confirmed],BLANK())"
-    },
-    {
-      "Table_name": "Social",
-      "Measures_Name": "TATadh weekly formatting",
-      "Sources": "dimdate",
-      "Measures": "var prv_conf = CALCULATE([TAT Adherence],all(dimdate),dimdate[Week Rank]=AVERAGE(dimdate[Week Rank])+1)\nRETURN\n[TAT Adherence]-prv_conf"
-    },
-    {
-      "Table_name": "TAT Logic",
-      "Measures_Name": "Delivered (Dt)",
-      "Sources": "Ordernhm, dimdate",
-      "Measures": "CALCULATE([Delivered],USERELATIONSHIP(dimdate[Date],Ordernhm[Updated]))"
-    },
-    {
-      "Table_name": "TAT Logic",
-      "Measures_Name": "delivered(tat)",
-      "Sources": "Ordernhm, dimdate",
-      "Measures": "CALCULATE(SUMX(FILTER(Ordernhm,[ONDC order_status] = \"Delivered\"),Ordernhm[Breach]),USERELATIONSHIP(dimdate[Date],Ordernhm[Updated]))"
-    },
-    {
-      "Table_name": "TAT Logic",
-      "Measures_Name": "inprocess(Dt)",
-      "Sources": "dimdate",
-      "Measures": "var maxdate = DATE(2024,02,01)\nReturn\nCALCULATE([In Process],\ndimdate[Date]>= maxdate,\nISONORAFTER(dimdate[Date],MAX(dimdate[Date]),DESC))"
-    },
-    {
-      "Table_name": "TAT Logic",
-      "Measures_Name": "inprocess(tat)",
-      "Sources": "Ordernhm, dimdate",
-      "Measures": "var maxdate = DATE(2024,02,01)\nRETURN\nCALCULATE(SUMX(FILTER(Ordernhm,Ordernhm[ONDC order_status]=\"In Process\"),Ordernhm[Breach]),\ndimdate[Date]>= maxdate,\nISONORAFTER(dimdate[Date],MAX(dimdate[Date]),DESC))"
-    },
-    {
-      "Table_name": "TAT Logic",
-      "Measures_Name": "Delivered Tat%",
-      "Sources": "",
-      "Measures": "DIVIDE([delivered(tat)],[Delivered (Dt)],\"-\")"
-    },
-    {
-      "Table_name": "TAT Logic",
-      "Measures_Name": "Buyer Cancelled (Dt)",
-      "Sources": "Ordernhm, dimdate",
-      "Measures": "CALCULATE([Buyer cancel],USERELATIONSHIP(dimdate[Date],Ordernhm[Updated]))"
-    },
-    {
-      "Table_name": "TAT Logic",
-      "Measures_Name": "cancelled(tat)%",
-      "Sources": "",
-      "Measures": "DIVIDE([Buyer cancelled(tat)],[Buyer cancelled(tat)],\"-\")"
-    },
-    {
-      "Table_name": "TAT Logic",
-      "Measures_Name": "inprocess(tat)%",
-      "Sources": "",
-      "Measures": "DIVIDE([inprocess(tat)],[inprocess(Dt)],\"-\")"
-    },
-    {
-      "Table_name": "TAT Logic",
-      "Measures_Name": "Overall Tat breach",
-      "Sources": "",
-      "Measures": "var num = [Buyer cancelled(tat)] + [delivered(tat)] + [inprocess(tat)]\nvar den = [Buyer cancelled(tat)] + [Delivered (Dt)] + [inprocess(Dt)]\nRETURN\nDIVIDE(num,den,\"-\")"
-    },
-    {
-      "Table_name": "TAT Logic",
-      "Measures_Name": "Total Orders",
-      "Sources": "",
-      "Measures": "[Buyer Cancelled (Dt)] + [Delivered (Dt)] + [inprocess(Dt)]"
-    },
-    {
-      "Table_name": "TAT Logic",
-      "Measures_Name": "Buyer cancelled(tat)",
-      "Sources": "Ordernhm, dimdate",
-      "Measures": "CALCULATE(SUMX(FILTER(Ordernhm,[Cancelled att] = \"Buyer App\"),Ordernhm[Breach]),USERELATIONSHIP(dimdate[Date],Ordernhm[Updated]))"
-    },
-    {
-      "Table_name": "TAT Logic",
-      "Measures_Name": "Logistics cancelled(tat)",
-      "Sources": "Ordernhm, dimdate",
-      "Measures": "CALCULATE(SUMX(FILTER(Ordernhm,[Cancelled att] = \"Logistics Provider\"),Ordernhm[Breach]),USERELATIONSHIP(dimdate[Date],Ordernhm[Updated]))"
-    },
-    {
-      "Table_name": "TAT Logic",
-      "Measures_Name": "inprocessnew(tat)",
-      "Sources": "Ordernhm",
-      "Measures": "CALCULATE(SUM(Ordernhm[Breach]),Ordernhm[ONDC order_status]=\"In Process\")"
-    },
-    {
-      "Table_name": "TAT Logic",
-      "Measures_Name": "total tat",
-      "Sources": "",
-      "Measures": "[Buyer cancelled(tat)] + [inprocess(tat)] + [delivered(tat)]"
-    },
-    {
-      "Table_name": "TAT Logic",
-      "Measures_Name": "TAT Adherence",
-      "Sources": "",
-      "Measures": "1-[Overall Tat breach]"
-    },
-    {
-      "Table_name": "intercity tracker",
-      "Measures_Name": "opd",
-      "Sources": "Ordernhm, dimdate",
-      "Measures": "DIVIDE([Confirmed],CALCULATE(DISTINCTCOUNT(dimdate[Date]),ALLEXCEPT(Ordernhm,Ordernhm[Date])))"
-    },
-    {
-      "Table_name": "intercity tracker",
-      "Measures_Name": "top_10_cities_opd_%",
-      "Sources": "Ordernhm",
-      "Measures": "VAR table1 = SUMMARIZE(Ordernhm,Ordernhm[Delivery City],\"OPD\",[opd])\nVAR table2 = TOPN(10,table1,[OPD],DESC)\nVAR val_1 = SUMX(table2,[OPD])\nVAR val_2 = [opd]\nRETURN\nDIVIDE(val_1,val_2,blank())"
-    },
-    {
-      "Table_name": "intercity tracker",
-      "Measures_Name": "top_10_sellers_opd_%",
-      "Sources": "Ordernhm",
-      "Measures": "VAR table1 = SUMMARIZE(Ordernhm,Ordernhm[provider key],\"OPD\",[opd])\nVAR table2 = TOPN(10,table1,[OPD],DESC)\nVAR val_1 = SUMX(table2,[OPD])\nVAR val_2 = [opd]\nRETURN\nDIVIDE(val_1,val_2,blank())"
-    },
-    {
-      "Table_name": "intercity tracker",
-      "Measures_Name": "top_10_brands_opd_%",
-      "Sources": "Ordernhm",
-      "Measures": "VAR table1 = SUMMARIZE(Ordernhm,Ordernhm[Seller Name],\"OPD\",[opd])\nVAR table2 = TOPN(10,table1,[OPD],DESC)\nVAR val_1 = SUMX(table2,[OPD])\nVAR val_2 = [opd]\nRETURN\nDIVIDE(val_1,val_2,blank())"
-    },
-    {
-      "Table_name": "Category Table",
-      "Measures_Name": "Confirmed Category",
-      "Sources": "Itemnhm",
-      "Measures": "SUM(Itemnhm[comp_key])"
-    },
-    {
-      "Table_name": "Category Table",
-      "Measures_Name": "Confirmed Sub-Category",
-      "Sources": "Itemnhm",
-      "Measures": "SUM(Itemnhm[comp-subkey])"
-    },
-    {
-      "Table_name": "Category Table",
-      "Measures_Name": "Conf Cat",
-      "Sources": "Itemnhm",
-      "Measures": "SWITCH(TRUE(),\nNOT HASONEVALUE(Itemnhm[Order Category]) && HASONEVALUE(Itemnhm[item category]),[Confirmed Category],\nHASONEVALUE(Itemnhm[Order Category]) && HASONEVALUE(Itemnhm[item category]),[Confirmed Sub-Category],\n[Confirmed Category]\n)"
-    },
-    {
-      "Table_name": "Category Table",
-      "Measures_Name": "Confirmed Items",
-      "Sources": "Itemnhm",
-      "Measures": "SUM(Itemnhm[noi_key])"
-    },
-    {
-      "Table_name": "Category Table",
-      "Measures_Name": "Delivered Items",
-      "Sources": "Itemnhm",
-      "Measures": "CALCULATE(SUM(Itemnhm[noi_key]),Itemnhm[ONDC order_status]=\"Delivered\")"
-    },
-    {
-      "Table_name": "Category Table",
-      "Measures_Name": "Cancelled Items",
-      "Sources": "Itemnhm",
-      "Measures": "CALCULATE(SUM(Itemnhm[noi_key]),Itemnhm[ONDC order_status]=\"Cancelled\")"
-    },
-    {
-      "Table_name": "Category Table",
-      "Measures_Name": "In Process Items",
-      "Sources": "Itemnhm",
-      "Measures": "CALCULATE(SUM(Itemnhm[noi_key]),Itemnhm[ONDC order_status]=\"In Process\")"
-    },
-    {
-      "Table_name": "Category Table",
-      "Measures_Name": "Delivered Category",
-      "Sources": "Itemnhm",
-      "Measures": "CALCULATE(SUM(Itemnhm[comp_key]),Itemnhm[ONDC order_status]=\"Delivered\")"
-    },
-    {
-      "Table_name": "Category Table",
-      "Measures_Name": "Delivered Sub-Category",
-      "Sources": "Itemnhm",
-      "Measures": "CALCULATE(SUM(Itemnhm[comp-subkey]),Itemnhm[ONDC order_status]=\"Delivered\")"
-    },
-    {
-      "Table_name": "Category Table",
-      "Measures_Name": "Cancelled Category",
-      "Sources": "Itemnhm",
-      "Measures": "CALCULATE(sum(Itemnhm[comp_key]),Itemnhm[ONDC order_status]=\"Cancelled\")"
-    },
-    {
-      "Table_name": "Category Table",
-      "Measures_Name": "Cancelled Sub-Category",
-      "Sources": "Itemnhm",
-      "Measures": "CALCULATE(sum(Itemnhm[comp-subkey]),Itemnhm[ONDC order_status]=\"Cancelled\")"
-    },
-    {
-      "Table_name": "Category Table",
-      "Measures_Name": "In Process Category",
-      "Sources": "Itemnhm",
-      "Measures": "CALCULATE(SUM(Itemnhm[comp_key]),Itemnhm[ONDC order_status]=\"In Process\")"
-    },
-    {
-      "Table_name": "Category Table",
-      "Measures_Name": "In Process Sub-Category",
-      "Sources": "Itemnhm",
-      "Measures": "CALCULATE(SUM(Itemnhm[comp-subkey]),Itemnhm[ONDC order_status]=\"In Process\")"
-    },
-    {
-      "Table_name": "Category Table",
-      "Measures_Name": "Del Cat",
-      "Sources": "Itemnhm",
-      "Measures": "SWITCH(TRUE(),\nNOT HASONEVALUE(Itemnhm[Order Category]) && HASONEVALUE(Itemnhm[item category]),[Delivered Category],\nHASONEVALUE(Itemnhm[Order Category]) && HASONEVALUE(Itemnhm[item category]),[Delivered Sub-Category],\n[Delivered Category]\n)"
-    },
-    {
-      "Table_name": "Category Table",
-      "Measures_Name": "Cancl Cat",
-      "Sources": "Itemnhm",
-      "Measures": "SWITCH(TRUE(),\nNOT HASONEVALUE(Itemnhm[Order Category]) && HASONEVALUE(Itemnhm[item category]),[Cancelled Category],\nHASONEVALUE(Itemnhm[Order Category]) && HASONEVALUE(Itemnhm[item category]),[Cancelled Sub-Category],\n[Cancelled Category]\n)"
-    },
-    {
-      "Table_name": "Category Table",
-      "Measures_Name": "In Proc Cat",
-      "Sources": "Itemnhm",
-      "Measures": "SWITCH(TRUE(),\nNOT HASONEVALUE(Itemnhm[Order Category]) && HASONEVALUE(Itemnhm[item category]),[In Process Category],\nHASONEVALUE(Itemnhm[Order Category]) && HASONEVALUE(Itemnhm[item category]),[In Process Sub-Category],\n[In Process Category]\n)"
-    },
-    {
-      "Table_name": "Category Table",
-      "Measures_Name": "TATadh monthly formatting",
-      "Sources": "dimdate",
-      "Measures": "var prv_adh = CALCULATE([TAT Adherence],DATEADD(dimdate[Date],-1,MONTH))\nRETURN\n[TAT Adherence]-prv_adh"
-    },
-    {
-      "Table_name": "Agri",
-      "Measures_Name": "Shipped mark",
-      "Sources": "Ordernhm",
-      "Measures": "CALCULATE(sum(Ordernhm[no_key]),Ordernhm[Shipped at]<>BLANK())"
-    },
-    {
-      "Table_name": "Confirmed order pages",
-      "Measures_Name": "Confirmed Category daily",
-      "Sources": "",
-      "Measures": "\"Category-wise Daily Order View\""
-    },
-    {
-      "Table_name": "Confirmed order pages",
-      "Measures_Name": "Confirmed Category monthly",
-      "Sources": "",
-      "Measures": "\"Category-wise Monthly Order View\""
-    },
-    {
-      "Table_name": "Confirmed order pages",
-      "Measures_Name": "Confirmed Category weekly",
-      "Sources": "",
-      "Measures": "\"Category-wise Weekly Order View\""
-    },
-    {
-      "Table_name": "Confirmed order pages",
-      "Measures_Name": "Confirmed daily formatting",
-      "Sources": "dimdate",
-      "Measures": "var prv_conf = CALCULATE([confirmed],DATEADD(dimdate[Date],-1,DAY))\nRETURN\n[confirmed]-prv_conf"
-    },
-    {
-      "Table_name": "Confirmed order pages",
-      "Measures_Name": "Confirmed monthly formatting",
-      "Sources": "dimdate",
-      "Measures": "var prv_conf = CALCULATE([confirmed],DATEADD(dimdate[Date],-1,MONTH))\nRETURN\n[confirmed]-prv_conf"
-    },
-    {
-      "Table_name": "Confirmed order pages",
-      "Measures_Name": "Confirmed table daily",
-      "Sources": "Ordernhm",
-      "Measures": "\"Daily Order View for \" & IF(HASONEVALUE('Ordernhm'[Category]),SELECTEDVALUE('Ordernhm'[Category]), \"Multiple Categories\")"
-    },
-    {
-      "Table_name": "Confirmed order pages",
-      "Measures_Name": "Confirmed table monthly",
-      "Sources": "Ordernhm",
-      "Measures": "\"Monthly Order View for \" & IF(HASONEVALUE('Ordernhm'[Category]),SELECTEDVALUE('Ordernhm'[Category]), \"Multiple Categories\")"
-    },
-    {
-      "Table_name": "Confirmed order pages",
-      "Measures_Name": "Confirmed table weekly",
-      "Sources": "Ordernhm",
-      "Measures": "\"Weekly Order View for \" & IF(HASONEVALUE('Ordernhm'[Category]),SELECTEDVALUE('Ordernhm'[Category]), \"Multiple Categories\")"
-    },
-    {
-      "Table_name": "Confirmed order pages",
-      "Measures_Name": "Confirmed weekly formatting",
-      "Sources": "dimdate",
-      "Measures": "var prv_conf = CALCULATE([confirmed],all(dimdate),dimdate[Week Rank]=AVERAGE(dimdate[Week Rank])+1)\nRETURN\n[confirmed]-prv_conf"
-    },
-    {
-      "Table_name": "TAT Adherence pages",
-      "Measures_Name": "TATadh daily formatting",
-      "Sources": "dimdate",
-      "Measures": "var prv_adh = CALCULATE([TAT Adherence],DATEADD(dimdate[Date],-1,DAY))\nRETURN\n[TAT Adherence]-prv_adh"
-    },
-    {
-      "Table_name": "TAT Adherence pages",
-      "Measures_Name": "TATadh table daily",
-      "Sources": "Ordernhm",
-      "Measures": "\"Daily TAT Adherence View for \" & IF(HASONEVALUE('Ordernhm'[Category]),SELECTEDVALUE('Ordernhm'[Category]), \"Multiple Categories\")"
-    },
-    {
-      "Table_name": "TAT Adherence pages",
-      "Measures_Name": "TATadh table monthly",
-      "Sources": "Ordernhm",
-      "Measures": "\"Monthly TAT Adherence View for \" & IF(HASONEVALUE('Ordernhm'[Category]),SELECTEDVALUE('Ordernhm'[Category]), \"Multiple Categories\")\n1"
-    }
-  ]
+  {
+    "Table_name": "order_measures",
+    "Measures_Name": "Confirmed",
+    "Sources": "Ordernhm",
+    "Measures": "Sum(Ordernhm[no_key])",
+    "status": "done"
+  },
+  {
+    "Table_name": "order_measures",
+    "Measures_Name": "Delivered",
+    "Sources": "Ordernhm",
+    "Measures": "CALCULATE(\n    Sum(Ordernhm[no_key]),\n    Ordernhm[ONDC order_status] = \"Delivered\")",
+    "status": "done"
+  },
+  {
+    "Table_name": "order_measures",
+    "Measures_Name": "Cancelled",
+    "Sources": "Ordernhm",
+    "Measures": "CALCULATE(\n    Sum(Ordernhm[no_key]),\n    Ordernhm[ONDC order_status] = \"Cancelled\")",
+    "status": "done"
+  },
+  {
+    "Table_name": "order_measures",
+    "Measures_Name": "In Process",
+    "Sources": "Ordernhm",
+    "Measures": "CALCULATE(\n    Sum(Ordernhm[no_key]),\n    Ordernhm[ONDC order_status] = \"In Process\")",
+    "status": "done"
+  },
+  {
+    "Table_name": "order_measures",
+    "Measures_Name": "Part Delivered",
+    "Sources": "Ordernhm",
+    "Measures": "CALCULATE(\n    Sum(Ordernhm[no_key]),\n    FILTER(Ordernhm,Ordernhm[ONDC order_status] = \"Part Delivered\")\n)",
+    "status": "done"
+  },
+  {
+    "Table_name": "order_measures",
+    "Measures_Name": "Buyer cancel",
+    "Sources": "Ordernhm, Cancellation code",
+    "Measures": "CALCULATE(\n   [Cancelled],\n   Ordernhm[ONDC order_status]=\"Cancelled\",\n   RELATEDTABLE('Cancellation code'),'Cancellation code'[attributed to]=\"Buyer app\")"
+  },
+  {
+    "Table_name": "order_measures",
+    "Measures_Name": "Seller cancel",
+    "Sources": "Ordernhm, Cancellation code",
+    "Measures": "CALCULATE(\n   Sum(Ordernhm[no_key]),\n   Ordernhm[ONDC order_status]=\"Cancelled\",\n   RELATEDTABLE('Cancellation code'),'Cancellation code'[attributed to]= \"Seller app\")"
+  },
+  {
+    "Table_name": "order_measures",
+    "Measures_Name": "Logistic cancel",
+    "Sources": "Ordernhm, Cancellation code",
+    "Measures": "CALCULATE(\n   Sum(Ordernhm[no_key]),\n   Ordernhm[ONDC order_status]=\"Cancelled\",\n   RELATEDTABLE('Cancellation code'),'Cancellation code'[attributed to]=\"Logistics Provider\")"
+  },
+  {
+    "Table_name": "order_measures",
+    "Measures_Name": "Fill Rate",
+    "Sources": "",
+    "Measures": "DIVIDE([Confirmed] - [Seller cancel],[Confirmed])"
+  },
+  {
+    "Table_name": "order_measures",
+    "Measures_Name": "Seller NP",
+    "Sources": "Ordernhm, Seller NP",
+    "Measures": "DISTINCTCOUNT(Ordernhm[Seller NP])"
+  },
+  {
+    "Table_name": "order_measures",
+    "Measures_Name": "Buyer NP",
+    "Sources": "Ordernhm",
+    "Measures": "DISTINCTCOUNT(Ordernhm[Buyer NP])",
+    "status": "done"
+  },
+  {
+    "Table_name": "order_measures",
+    "Measures_Name": "Delivery %",
+    "Sources": "",
+    "Measures": "DIVIDE(\n   [Delivered],\n   [Confirmed],BLANK()\n)"
+  },
+  {
+    "Table_name": "order_measures",
+    "Measures_Name": "Order growth",
+    "Sources": "Ordernhm",
+    "Measures": "VAR lastdt =\nCALCULATE(\n   Sum(Ordernhm[no_key]),DATEADD(Ordernhm[Date],-1,DAY))\nVAR growth =\nDIVIDE((Sum(Ordernhm[no_key])-lastdt),lastdt)\nRETURN growth"
+  },
+  {
+    "Table_name": "order_measures",
+    "Measures_Name": "Active seller",
+    "Sources": "Ordernhm",
+    "Measures": "CALCULATE(\n   DISTINCTCOUNT(Ordernhm[provider key]),\n   DATESMTD(Ordernhm[Date])\n)"
+  },
+  {
+    "Table_name": "order_measures",
+    "Measures_Name": "Active buyer",
+    "Sources": "Ordernhm, dimdate",
+    "Measures": "CALCULATE(\n   DISTINCTCOUNT(Ordernhm[Buyer NP]),\n   DATESMTD(dimdate[Date])\n)"
+  },
+  {
+    "Table_name": "order_measures",
+    "Measures_Name": "Seller Cancel %",
+    "Sources": "",
+    "Measures": "DIVIDE([Seller cancel],[Confirmed]\n,\"-\")"
+  },
+  {
+    "Table_name": "order_measures",
+    "Measures_Name": "Cancellation code cal",
+    "Sources": "Ordernhm",
+    "Measures": "COUNT(Ordernhm[cancellation_code])",
+    "status": "done"
+  },
+  {
+    "Table_name": "order_measures",
+    "Measures_Name": "Cancel code share",
+    "Sources": "Cancellation code",
+    "Measures": "DIVIDE([Cancellation code cal],[Confirmed all])"
+  },
+  {
+    "Table_name": "order_measures",
+    "Measures_Name": "Cities with Active Sellers (MTD)",
+    "Sources": "Ordernhm, dimdate",
+    "Measures": "CALCULATE(\n   DISTINCTCOUNT(Ordernhm[Seller City]),\n   DATESMTD(dimdate[Date])\n)"
+  },
+  {
+    "Table_name": "order_measures",
+    "Measures_Name": "Active Delivery Cities (MTD)",
+    "Sources": "Ordernhm, dimdate",
+    "Measures": "CALCULATE(\n   DISTINCTCOUNT(Ordernhm[Delivery City]),\n   DATESMTD(dimdate[Date])\n)"
+  },
+  {
+    "Table_name": "order_measures",
+    "Measures_Name": "Tat breach %",
+    "Sources": "Ordernhm",
+    "Measures": "var buy_can_breach = CALCULATE([Buyer cancel],FILTER(Ordernhm,Ordernhm[Breach]=0))\nvar base = [Confirmed]-[Seller cancel]-[Logistic cancel] - buy_can_breach\nreturn\nDivide([Tat breach],base,BLANK())"
+  },
+  {
+    "Table_name": "order_measures",
+    "Measures_Name": "Tat breach",
+    "Sources": "Ordernhm",
+    "Measures": "SUMX(Ordernhm,Ordernhm[Breach])",
+    "status": "done"
+  },
+  {
+    "Table_name": "order_measures",
+    "Measures_Name": "Promised TAT breach",
+    "Sources": "Ordernhm",
+    "Measures": "VAR Breach = CALCULATE(SUMX(Ordernhm,IF(Ordernhm[ONDC order_status] = \"Delivered\" && Ordernhm[Updated at]>Ordernhm[Promised time] || Ordernhm[ONDC order_status] = \"Cancelled\" && Ordernhm[Updated at]>Ordernhm[Promised time] || Ordernhm[ONDC order_status] = \"In Process\" && TODAY()>Ordernhm[Promised time],1,0)))\nReturn\nIF(Breach = 1, \"Yes\",\"No\")"
+  },
+  {
+    "Table_name": "order_measures",
+    "Measures_Name": "Breach (mins)",
+    "Sources": "Ordernhm",
+    "Measures": "CALCULATE(AVERAGEX(Ordernhm,\nIF(Ordernhm[ONDC order_status] = \"Delivered\", DATEDIFF(Ordernhm[Promised time],Ordernhm[Updated at],SECOND)/60,\nIF(Ordernhm[ONDC order_status] = \"Cancelled\", DATEDIFF(Ordernhm[Promised time],Ordernhm[Updated at],SECOND)/60,\nIF(Ordernhm[ONDC order_status] = \"In Process\", DATEDIFF(Ordernhm[Promised time],TODAY(),SECOND)/60,\nBLANK()))))",
+    "status": "done"
+  },
+  {
+    "Table_name": "order_measures",
+    "Measures_Name": "Breach (hrs)",
+    "Sources": "Ordernhm",
+    "Measures": "CALCULATE(AVERAGEX(Ordernhm,\nIF(Ordernhm[ONDC order_status] = \"Delivered\", DATEDIFF(Ordernhm[Promised time],Ordernhm[Updated at],SECOND)/3600,\nIF(Ordernhm[ONDC order_status] = \"Cancelled\", DATEDIFF(Ordernhm[Promised time],Ordernhm[Updated at],SECOND)/3600,\nIF(Ordernhm[ONDC order_status] = \"In Process\", DATEDIFF(Ordernhm[Promised time],TODAY(),SECOND)/3600,\nBLANK()))))",
+    "status": "done"
+  },
+  {
+    "Table_name": "order_measures",
+    "Measures_Name": "Breach (days)",
+    "Sources": "Ordernhm",
+    "Measures": "CALCULATE(AVERAGEX(Ordernhm,\nIF(Ordernhm[ONDC order_status] = \"Delivered\", DATEDIFF(Ordernhm[Promised time],Ordernhm[Updated at],SECOND)/86400,\nIF(Ordernhm[ONDC order_status] = \"Cancelled\", DATEDIFF(Ordernhm[Promised time],Ordernhm[Updated at],SECOND)/86400,\nIF(Ordernhm[ONDC order_status] = \"In Process\", DATEDIFF(Ordernhm[Promised time],TODAY(),SECOND)/86400,\nBLANK()))))",
+    "status": "done"
+  },
+  {
+    "Table_name": "order_measures",
+    "Measures_Name": "Provider id (MTD)",
+    "Sources": "Ordernhm, dimdate",
+    "Measures": "CALCULATE(\n   DISTINCTCOUNT('Ordernhm'[provider key]),\n   DATESMTD(dimdate[Date])\n)"
+  },
+  {
+    "Table_name": "order_measures",
+    "Measures_Name": "Average Retail OPD",
+    "Sources": "Ordernhm",
+    "Measures": "DIVIDE([Confirmed],DISTINCTCOUNT(Ordernhm[Date]))",
+    "status": "done"
+  },
+  {
+    "Table_name": "order_measures",
+    "Measures_Name": "Inter NP",
+    "Sources": "Ordernhm",
+    "Measures": "CALCULATE(Sum(Ordernhm[no_key]),Ordernhm[Order type]=\"Inter NP\")",
+    "status": "done"
+  },
+  {
+    "Table_name": "order_measures",
+    "Measures_Name": "Intra NP",
+    "Sources": "Ordernhm",
+    "Measures": "CALCULATE(Sum(Ordernhm[no_key]),Ordernhm[Order type]=\"Intra NP\")",
+    "status": "done"
+  },
+  {
+    "Table_name": "order_measures",
+    "Measures_Name": "Social Sellers on a day",
+    "Sources": "Ordernhm, Social",
+    "Measures": "CALCULATE(DISTINCTCOUNT(Ordernhm[provider key]),Ordernhm[Sector]=\"Social\")"
+  },
+  {
+    "Table_name": "order_measures",
+    "Measures_Name": "G sheet",
+    "Sources": "Social, Seller NP",
+    "Measures": "CALCULATE(DISTINCTCOUNT(Social[Key3]),ALLSELECTED(Social[Seller NP (Provided by Expansion)]))"
+  },
+  {
+    "Table_name": "order_measures",
+    "Measures_Name": "Logistic Cancel %",
+    "Sources": "",
+    "Measures": "DIVIDE([Logistic cancel],[Confirmed],\"-\")"
+  },
+  {
+    "Table_name": "order_measures",
+    "Measures_Name": "Social Cred Orders",
+    "Sources": "Social, cred",
+    "Measures": "CALCULATE([Confirmed],cred[cred_code] = \"Social Sector\")"
+  },
+  {
+    "Table_name": "order_measures",
+    "Measures_Name": "Social Orders Current",
+    "Sources": "Ordernhm, Social",
+    "Measures": "CALCULATE([Confirmed],Ordernhm[Sector] = \"Social\")"
+  },
+  {
+    "Table_name": "order_measures",
+    "Measures_Name": "Difference in Social Orders",
+    "Sources": "Social, cred",
+    "Measures": "[Social Orders Current] - [Social Cred Orders]"
+  },
+  {
+    "Table_name": "order_measures",
+    "Measures_Name": "Delivered with TAT",
+    "Sources": "Ordernhm",
+    "Measures": "CALCULATE([Delivered],FILTER(Ordernhm,Ordernhm[Breach]=0))",
+    "status": "done"
+  },
+  {
+    "Table_name": "order_measures",
+    "Measures_Name": "Delivered beyond TAT",
+    "Sources": "Ordernhm",
+    "Measures": "CALCULATE([Delivered],FILTER(Ordernhm,Ordernhm[Breach]=1))",
+    "status": "done"
+  },
+  {
+    "Table_name": "order_measures",
+    "Measures_Name": "Delivered Breached only",
+    "Sources": "Ordernhm",
+    "Measures": "var a=\nCALCULATE(sum(Ordernhm[no_key]), Ordernhm[ONDC order_status] = \"Delivered\" && Ordernhm[Breach]=1)\nvar del=\nCALCULATE(sum(Ordernhm[no_key]), Ordernhm[ONDC order_status] = \"Delivered\" )\nvar buy_can = CALCULATE([Buyer cancel],Ordernhm[Shipped at]<>BLANK())\nvar log_can = CALCULATE([Logistic cancel],Ordernhm[Shipped at]<>BLANK())\nvar inproc = CALCULATE([In Process],Ordernhm[Shipped at]<>BLANK())\nReturn\nDIVIDE(a,(del+buy_can+log_can+inproc))"
+  },
+  {
+    "Table_name": "order_measures",
+    "Measures_Name": "DBO",
+    "Sources": "Ordernhm",
+    "Measures": "CALCULATE(\n   SUM(Ordernhm[no_key]),\n   FILTER(\n       Ordernhm,\n       Ordernhm[ONDC order_status] = \"Delivered\"\n           && Ordernhm[Updated at] <= Ordernhm[Promised time]\n           && NOT(ISBLANK(Ordernhm[Updated at]))\n   )\n)",
+    "status": "done"
+  },
+  {
+    "Table_name": "Delivery ageing measures",
+    "Measures_Name": "Non F&B days diff",
+    "Sources": "Ordernhm",
+    "Measures": "CALCULATE(AVERAGEX(FILTER(Ordernhm,Ordernhm[ONDC order_status]=\"Delivered\" && Ordernhm[Category] <> \"F&B\"),DATEDIFF(Ordernhm[Created at],Ordernhm[Updated at],DAY))\n)",
+    "status": "done"
+  },
+  {
+    "Table_name": "Delivery ageing measures",
+    "Measures_Name": "Same Day",
+    "Sources": "Ordernhm",
+    "Measures": "CALCULATE(\n   SUM(Ordernhm[no_key]),\n    Ordernhm[day_diff] = 0 && Ordernhm[ONDC order_status]=\"Delivered\")",
+    "status": "done"
+  },
+  {
+    "Table_name": "Delivery ageing measures",
+    "Measures_Name": "Next Day",
+    "Sources": "Ordernhm",
+    "Measures": "CALCULATE(\n   COUNTROWS(Ordernhm),\n   Ordernhm[day_diff] = 1 && Ordernhm[ONDC order_status]=\"Delivered\")",
+    "status": "done"
+  },
+  {
+    "Table_name": "Delivery ageing measures",
+    "Measures_Name": "Day + 2",
+    "Sources": "Ordernhm",
+    "Measures": "CALCULATE(\n   COUNTROWS(Ordernhm),\n   Ordernhm[day_diff] = 2 && Ordernhm[ONDC order_status]=\"Delivered\")",
+    "status": "done"
+  },
+  {
+    "Table_name": "Delivery ageing measures",
+    "Measures_Name": "Confirmed all",
+    "Sources": "Ordernhm, dimdate, Seller NP",
+    "Measures": "CALCULATE(\n   COUNTROWS(Ordernhm),\n   ALLEXCEPT(Ordernhm,Ordernhm[Category],Ordernhm[ONDC order_status],'Ordernhm'[Delivery Type],'Seller NP'[seller_np],dimdate[Date])\n)"
+  },
+  {
+    "Table_name": "Delivery ageing measures",
+    "Measures_Name": "More than 2 Days",
+    "Sources": "Ordernhm",
+    "Measures": "CALCULATE(\n   COUNTROWS(Ordernhm),\n   Ordernhm[day_diff] > 2 && Ordernhm[ONDC order_status]=\"Delivered\")",
+    "status": "done"
+  },
+  {
+    "Table_name": "Delivery ageing measures",
+    "Measures_Name": "Same Day %",
+    "Sources": "",
+    "Measures": "DIVIDE([Same Day],[Delivered],\"-\")"
+  },
+  {
+    "Table_name": "Delivery ageing measures",
+    "Measures_Name": "Next Day %",
+    "Sources": "",
+    "Measures": "DIVIDE([Next Day],[Delivered],\"-\")"
+  },
+  {
+    "Table_name": "Delivery ageing measures",
+    "Measures_Name": "Day + 2 %",
+    "Sources": "",
+    "Measures": "DIVIDE([Day + 2],[Delivered],\"-\")"
+  },
+  {
+    "Table_name": "Delivery ageing measures",
+    "Measures_Name": "More than 2 Day %",
+    "Sources": "",
+    "Measures": "DIVIDE([More than 2 Days],[Delivered],\"-\")"
+  },
+  {
+    "Table_name": "Delivery ageing measures",
+    "Measures_Name": "F&B mins diff",
+    "Sources": "Ordernhm",
+    "Measures": "CALCULATE(AVERAGEX(Ordernhm,\n   DATEDIFF([Created at],[Updated at],MINUTE)),\n   FILTER(Ordernhm,Ordernhm[Category] = \"F&B\"),\n   FILTER(Ordernhm,[ONDC order_status]=\"Delivered\")\n)",
+    "status": "done"
+  },
+  {
+    "Table_name": "Delivery ageing measures",
+    "Measures_Name": "30 - 45 mins",
+    "Sources": "Ordernhm",
+    "Measures": "CALCULATE(\n   Sum(Ordernhm[no_key]),\n   Ordernhm[min_diff] > 30 &&  Ordernhm[min_diff]<=45,Ordernhm[ONDC order_status]=\"Delivered\" && Ordernhm[Category]=\"F&B\")",
+    "status": "done"
+  },
+  {
+    "Table_name": "Delivery ageing measures",
+    "Measures_Name": "45 - 60 mins",
+    "Sources": "Ordernhm",
+    "Measures": "CALCULATE(\n   Sum(Ordernhm[no_key]),\n   Ordernhm[min_diff] > 45 &&  Ordernhm[min_diff]<=60 && Ordernhm[ONDC order_status]=\"Delivered\" && Ordernhm[Category]=\"F&B\")",
+    "status": "done"
+  },
+  {
+    "Table_name": "Delivery ageing measures",
+    "Measures_Name": "60 - 120 mins",
+    "Sources": "Ordernhm",
+    "Measures": "CALCULATE(\n   COUNTROWS(Ordernhm),\n   Ordernhm[min_diff] > 60 &&  Ordernhm[min_diff]<=120 && Ordernhm[ONDC order_status]=\"Delivered\" && Ordernhm[Category]=\"F&B\")",
+    "status": "done"
+  },
+  {
+    "Table_name": "Delivery ageing measures",
+    "Measures_Name": "Above 120 mins",
+    "Sources": "Ordernhm",
+    "Measures": "CALCULATE(\n   COUNTROWS(Ordernhm),\n   Ordernhm[min_diff] >120 && Ordernhm[ONDC order_status]=\"Delivered\" && Ordernhm[Category]=\"F&B\")",
+    "status": "done"
+  },
+  {
+    "Table_name": "Delivery ageing measures",
+    "Measures_Name": "45 - 60 mins %",
+    "Sources": "",
+    "Measures": "DIVIDE([45 - 60 mins],[Delivered],BLANK())"
+  },
+  {
+    "Table_name": "Delivery ageing measures",
+    "Measures_Name": "60 - 120 mins %",
+    "Sources": "",
+    "Measures": "DIVIDE ([60 - 120 mins],[Delivered],BLANK())"
+  },
+  {
+    "Table_name": "Delivery ageing measures",
+    "Measures_Name": "30 - 45 mins %",
+    "Sources": "",
+    "Measures": "DIVIDE ([30 - 45 mins],[Delivered],BLANK())"
+  },
+  {
+    "Table_name": "Delivery ageing measures",
+    "Measures_Name": "Above 120 mins %",
+    "Sources": "",
+    "Measures": "DIVIDE([Above 120 mins],[Delivered],BLANK())"
+  },
+  {
+    "Table_name": "Delivery ageing measures",
+    "Measures_Name": "On time deliveries",
+    "Sources": "Ordernhm",
+    "Measures": "SUM(Ordernhm[on-time-del])",
+    "status": "done"
+  },
+  {
+    "Table_name": "Delivery ageing measures",
+    "Measures_Name": "On time delivered %",
+    "Sources": "Ordernhm",
+    "Measures": "var buy_can_breach = CALCULATE([Buyer cancel],Ordernhm[Breach]=0)\nvar base = [Confirmed]-[Seller cancel]-[Logistic cancel] - buy_can_breach\nreturn\nDivide([On time deliveries],base,BLANK())"
+  },
+  {
+    "Table_name": "Delivery ageing measures",
+    "Measures_Name": "Average TAT (in mins)",
+    "Sources": "Ordernhm",
+    "Measures": "AVERAGEX(FILTER(Ordernhm,Ordernhm[ONDC order_status]=\"Delivered\"),[tat_time])",
+    "status": "done"
+  },
+  {
+    "Table_name": "Delivery ageing measures",
+    "Measures_Name": "Average TAT (in days)",
+    "Sources": "Ordernhm",
+    "Measures": "DIVIDE(AVERAGEX(FILTER(Ordernhm,Ordernhm[ONDC order_status]=\"Delivered\"),[tat_time]),1440)",
+    "status": "done"
+  },
+  {
+    "Table_name": "Delivery ageing measures",
+    "Measures_Name": "Average TAT (in hrs)",
+    "Sources": "",
+    "Measures": "[Average TAT (in mins)]/60"
+  },
+  {
+    "Table_name": "Delivery ageing measures",
+    "Measures_Name": "Avg Delivery (hrs)",
+    "Sources": "Ordernhm",
+    "Measures": "DIVIDE(CALCULATE(AVERAGEX(FILTER(Ordernhm,Ordernhm[ONDC order_status]=\"Delivered\" && [min_diff]>0),[min_diff])),60)",
+    "status": "done"
+  },
+  {
+    "Table_name": "Delivery ageing measures",
+    "Measures_Name": "Avg Delivery (mins)",
+    "Sources": "Ordernhm",
+    "Measures": "CALCULATE(AVERAGEX(FILTER(Ordernhm,Ordernhm[ONDC order_status]=\"Delivered\" && [min_diff]>0),[min_diff]))",
+    "status": "done"
+  },
+  {
+    "Table_name": "Delivery ageing measures",
+    "Measures_Name": "Avg Delivery (days)",
+    "Sources": "Ordernhm",
+    "Measures": "DIVIDE(CALCULATE(AVERAGEX(FILTER(Ordernhm,Ordernhm[ONDC order_status]=\"Delivered\" && [min_diff]>0),[min_diff])),1440)",
+    "status": "done"
+  },
+  {
+    "Table_name": "Delivery ageing measures",
+    "Measures_Name": "15 - 30 mins",
+    "Sources": "Ordernhm",
+    "Measures": "CALCULATE(\n   Sum(Ordernhm[no_key]),\n   Ordernhm[min_diff] > 15 &&  Ordernhm[min_diff]<=30,Ordernhm[ONDC order_status]=\"Delivered\" && Ordernhm[Category]=\"F&B\")",
+    "status": "done"
+  },
+  {
+    "Table_name": "Delivery ageing measures",
+    "Measures_Name": "Within 15 mins",
+    "Sources": "Ordernhm",
+    "Measures": "CALCULATE(\n   Sum(Ordernhm[no_key]),\n   Ordernhm[min_diff]<=15,Ordernhm[ONDC order_status]=\"Delivered\" && Ordernhm[Category]=\"F&B\")",
+    "status": "done"
+  },
+  {
+    "Table_name": "Delivery ageing measures",
+    "Measures_Name": "15 - 30 mins %",
+    "Sources": "",
+    "Measures": "DIVIDE([15 - 30 mins],[Delivered],BLANK())"
+  },
+  {
+    "Table_name": "Delivery ageing measures",
+    "Measures_Name": "Within 15 mins %",
+    "Sources": "",
+    "Measures": "DIVIDE([Within 15 mins],[Delivered],BLANK())"
+  },
+  {
+    "Table_name": "TAT measures",
+    "Measures_Name": "TAT+1",
+    "Sources": "Ordernhm",
+    "Measures": "CALCULATE([Delivered],\n   FILTER(Ordernhm,Ordernhm[tat_diff_days] = 1))",
+    "status": "done"
+  },
+  {
+    "Table_name": "TAT measures",
+    "Measures_Name": "TAT + 2",
+    "Sources": "Ordernhm",
+    "Measures": "CALCULATE([Delivered],\n   FILTER(Ordernhm,Ordernhm[tat_diff_days] = 2))",
+    "status": "done"
+  },
+  {
+    "Table_name": "TAT measures",
+    "Measures_Name": "TAT + 3",
+    "Sources": "Ordernhm",
+    "Measures": "CALCULATE([Delivered],\n   FILTER(Ordernhm,Ordernhm[tat_diff_days] = 3))",
+    "status": "done"
+  },
+  {
+    "Table_name": "TAT measures",
+    "Measures_Name": "TAT + 4",
+    "Sources": "Ordernhm",
+    "Measures": "CALCULATE([Delivered],\n   FILTER(Ordernhm,Ordernhm[tat_diff_days] = 4))",
+    "status": "done"
+  },
+  {
+    "Table_name": "TAT measures",
+    "Measures_Name": "TAT > 4",
+    "Sources": "Ordernhm",
+    "Measures": "CALCULATE([Delivered],\n   FILTER(Ordernhm,Ordernhm[tat_diff_days] > 4))",
+    "status": "done"
+  },
+  {
+    "Table_name": "TAT measures",
+    "Measures_Name": "TAT+1 %",
+    "Sources": "",
+    "Measures": "DIVIDE([TAT+1],[Confirmed],BLANK())"
+  },
+  {
+    "Table_name": "TAT measures",
+    "Measures_Name": "TAT + 2 %",
+    "Sources": "",
+    "Measures": "DIVIDE([TAT + 2],[Confirmed],BLANK())"
+  },
+  {
+    "Table_name": "TAT measures",
+    "Measures_Name": "TAT + 3 %",
+    "Sources": "",
+    "Measures": "DIVIDE([TAT + 3],[Confirmed],BLANK())"
+  },
+  {
+    "Table_name": "TAT measures",
+    "Measures_Name": "TAT + 4 %",
+    "Sources": "",
+    "Measures": "DIVIDE([TAT + 4],[Confirmed],BLANK())"
+  },
+  {
+    "Table_name": "TAT measures",
+    "Measures_Name": "TAT > 4 %",
+    "Sources": "",
+    "Measures": "DIVIDE([TAT > 4],[Confirmed],BLANK())"
+  },
+  {
+    "Table_name": "TAT measures",
+    "Measures_Name": "TAT < 1",
+    "Sources": "Ordernhm",
+    "Measures": "CALCULATE(SUMX(\n   FILTER(Ordernhm,[ONDC order_status]=\"Delivered\"),\n   IF(AND(DATEDIFF(Ordernhm[Promised time],Ordernhm[Updated at],HOUR)< 24,\n   DATEDIFF(Ordernhm[Promised time],Ordernhm[Updated at],HOUR)>0),1,0)))"
+  },
+  {
+    "Table_name": "TAT measures",
+    "Measures_Name": "TAT 0-6 hrs",
+    "Sources": "Ordernhm",
+    "Measures": "CALCULATE([Delivered],FILTER(Ordernhm,\n   Ordernhm[tat_dif]>0 && Ordernhm[tat_dif]<=21600))",
+    "status": "done"
+  },
+  {
+    "Table_name": "TAT measures",
+    "Measures_Name": "TAT 6-12 hrs",
+    "Sources": "Ordernhm",
+    "Measures": "CALCULATE([Delivered],\n    FILTER(Ordernhm,Ordernhm[tat_dif]>21600 &&\n   Ordernhm[tat_dif]<=43200))",
+    "status": "done"
+  },
+  {
+    "Table_name": "TAT measures",
+    "Measures_Name": "TAT 12-24 hrs",
+    "Sources": "Ordernhm",
+    "Measures": "CALCULATE([Delivered],\n   ( FILTER(Ordernhm,Ordernhm[tat_dif]>43200 &&\n   Ordernhm[tat_dif]<=86400)))",
+    "status": "done"
+  },
+  {
+    "Table_name": "TAT measures",
+    "Measures_Name": "TAT 24-48 hrs",
+    "Sources": "Ordernhm",
+    "Measures": "CALCULATE([Delivered],\n    FILTER(Ordernhm,Ordernhm[tat_dif]>86400 && Ordernhm[tat_dif]<=172800))",
+    "status": "done"
+  },
+  {
+    "Table_name": "TAT measures",
+    "Measures_Name": "TAT >48 hrs",
+    "Sources": "Ordernhm",
+    "Measures": "CALCULATE([Delivered],\n   Ordernhm[tat_dif]>172800)",
+    "status": "done"
+  },
+  {
+    "Table_name": "TAT measures",
+    "Measures_Name": "TAT 0-6 hrs %",
+    "Sources": "",
+    "Measures": "DIVIDE(\n   [TAT 0-6 hrs],[Confirmed],BLANK())"
+  },
+  {
+    "Table_name": "TAT measures",
+    "Measures_Name": "TAT 6-12 hrs%",
+    "Sources": "",
+    "Measures": "DIVIDE(\n   [TAT 6-12 hrs],[Confirmed],BLANK())"
+  },
+  {
+    "Table_name": "TAT measures",
+    "Measures_Name": "TAT 12-24 hrs%",
+    "Sources": "",
+    "Measures": "DIVIDE(\n   [TAT 12-24 hrs],[Confirmed],BLANK())"
+  },
+  {
+    "Table_name": "TAT measures",
+    "Measures_Name": "TAT 24-48 hrs%",
+    "Sources": "",
+    "Measures": "DIVIDE(\n   [TAT 24-48 hrs],[Confirmed],BLANK())"
+  },
+  {
+    "Table_name": "TAT measures",
+    "Measures_Name": "TAT >48 hrs%",
+    "Sources": "",
+    "Measures": "DIVIDE(\n   [TAT >48 hrs],[Confirmed],BLANK())"
+  },
+  {
+    "Table_name": "TAT measures",
+    "Measures_Name": "TAT < 5 mins",
+    "Sources": "Ordernhm",
+    "Measures": "CALCULATE([Delivered],\n    FILTER(Ordernhm,Ordernhm[tat_dif]>0 &&\n   Ordernhm[tat_dif]<=300))",
+    "status": "done"
+  },
+  {
+    "Table_name": "TAT measures",
+    "Measures_Name": "TAT 5-15 mins",
+    "Sources": "Ordernhm",
+    "Measures": "CALCULATE([Delivered],\n   FILTER(Ordernhm,Ordernhm[tat_dif]>300 && Ordernhm[tat_dif]<=900))",
+    "status": "done"
+  },
+  {
+    "Table_name": "TAT measures",
+    "Measures_Name": "TAT 15-30 mins",
+    "Sources": "Ordernhm",
+    "Measures": "CALCULATE([Delivered],\n    FILTER(Ordernhm,Ordernhm[tat_dif]>900 &&\n   Ordernhm[tat_dif]<=1800))",
+    "status": "done"
+  },
+  {
+    "Table_name": "TAT measures",
+    "Measures_Name": "TAT 30-60 mins",
+    "Sources": "Ordernhm",
+    "Measures": "CALCULATE([Delivered],\n    FILTER(Ordernhm,Ordernhm[tat_dif]>1800 &&\n   Ordernhm[tat_dif]<=3600))",
+    "status": "done"
+  },
+  {
+    "Table_name": "TAT measures",
+    "Measures_Name": "TAT > 60 mins",
+    "Sources": "Ordernhm",
+    "Measures": "CALCULATE([Delivered],\n   Ordernhm[tat_dif]>3600)",
+    "status": "done"
+  },
+  {
+    "Table_name": "TAT measures",
+    "Measures_Name": "TAT < 5 mins%",
+    "Sources": "",
+    "Measures": "DIVIDE([TAT < 5 mins],[Confirmed],BLANK())"
+  },
+  {
+    "Table_name": "TAT measures",
+    "Measures_Name": "TAT > 60 mins%",
+    "Sources": "",
+    "Measures": "DIVIDE([TAT > 60 mins],[Confirmed],BLANK())"
+  },
+  {
+    "Table_name": "TAT measures",
+    "Measures_Name": "TAT 15-30 mins%",
+    "Sources": "",
+    "Measures": "DIVIDE([TAT 15-30 mins],[Confirmed],BLANK())"
+  },
+  {
+    "Table_name": "TAT measures",
+    "Measures_Name": "TAT 30-60 mins%",
+    "Sources": "",
+    "Measures": "DIVIDE([TAT 30-60 mins],[Confirmed],BLANK())"
+  },
+  {
+    "Table_name": "TAT measures",
+    "Measures_Name": "TAT 5-15 mins%",
+    "Sources": "",
+    "Measures": "DIVIDE([TAT 5-15 mins],[Confirmed],BLANK())"
+  },
+  {
+    "Table_name": "TAT measures",
+    "Measures_Name": "TAT (Same day)",
+    "Sources": "Ordernhm",
+    "Measures": "CALCULATE([Delivered],\n   FILTER(Ordernhm,Ordernhm[tat_diff_days] < 1 &&\n   Ordernhm[Promised time]< Ordernhm[Updated at]))",
+    "status": "done"
+  },
+  {
+    "Table_name": "TAT measures",
+    "Measures_Name": "TAT(Same Day) %",
+    "Sources": "",
+    "Measures": "DIVIDE([TAT (Same day)],[Confirmed],BLANK())"
+  },
+  {
+    "Table_name": "Social",
+    "Measures_Name": "TATadh weekly formatting",
+    "Sources": "dimdate",
+    "Measures": "var prv_conf = CALCULATE([TAT Adherence],all(dimdate),dimdate[Week Rank]=AVERAGE(dimdate[Week Rank])+1)\nRETURN\n[TAT Adherence]-prv_conf"
+  },
+  {
+    "Table_name": "TAT Logic",
+    "Measures_Name": "Delivered (Dt)",
+    "Sources": "Ordernhm, dimdate",
+    "Measures": "CALCULATE([Delivered],USERELATIONSHIP(dimdate[Date],Ordernhm[Updated]))"
+  },
+  {
+    "Table_name": "TAT Logic",
+    "Measures_Name": "delivered(tat)",
+    "Sources": "Ordernhm, dimdate",
+    "Measures": "CALCULATE(SUMX(FILTER(Ordernhm,[ONDC order_status] = \"Delivered\"),Ordernhm[Breach]),USERELATIONSHIP(dimdate[Date],Ordernhm[Updated]))"
+  },
+  {
+    "Table_name": "TAT Logic",
+    "Measures_Name": "inprocess(Dt)",
+    "Sources": "dimdate",
+    "Measures": "var maxdate = DATE(2024,02,01)\nReturn\nCALCULATE([In Process],\ndimdate[Date]>= maxdate,\nISONORAFTER(dimdate[Date],MAX(dimdate[Date]),DESC))"
+  },
+  {
+    "Table_name": "TAT Logic",
+    "Measures_Name": "inprocess(tat)",
+    "Sources": "Ordernhm, dimdate",
+    "Measures": "var maxdate = DATE(2024,02,01)\nRETURN\nCALCULATE(SUMX(FILTER(Ordernhm,Ordernhm[ONDC order_status]=\"In Process\"),Ordernhm[Breach]),\ndimdate[Date]>= maxdate,\nISONORAFTER(dimdate[Date],MAX(dimdate[Date]),DESC))"
+  },
+  {
+    "Table_name": "TAT Logic",
+    "Measures_Name": "Delivered Tat%",
+    "Sources": "",
+    "Measures": "DIVIDE([delivered(tat)],[Delivered (Dt)],\"-\")"
+  },
+  {
+    "Table_name": "TAT Logic",
+    "Measures_Name": "Buyer Cancelled (Dt)",
+    "Sources": "Ordernhm, dimdate",
+    "Measures": "CALCULATE([Buyer cancel],USERELATIONSHIP(dimdate[Date],Ordernhm[Updated]))"
+  },
+  {
+    "Table_name": "TAT Logic",
+    "Measures_Name": "cancelled(tat)%",
+    "Sources": "",
+    "Measures": "DIVIDE([Buyer cancelled(tat)],[Buyer cancelled(tat)],\"-\")"
+  },
+  {
+    "Table_name": "TAT Logic",
+    "Measures_Name": "inprocess(tat)%",
+    "Sources": "",
+    "Measures": "DIVIDE([inprocess(tat)],[inprocess(Dt)],\"-\")"
+  },
+  {
+    "Table_name": "TAT Logic",
+    "Measures_Name": "Overall Tat breach",
+    "Sources": "",
+    "Measures": "var num = [Buyer cancelled(tat)] + [delivered(tat)] + [inprocess(tat)]\nvar den = [Buyer cancelled(tat)] + [Delivered (Dt)] + [inprocess(Dt)]\nRETURN\nDIVIDE(num,den,\"-\")"
+  },
+  {
+    "Table_name": "TAT Logic",
+    "Measures_Name": "Total Orders",
+    "Sources": "",
+    "Measures": "[Buyer Cancelled (Dt)] + [Delivered (Dt)] + [inprocess(Dt)]"
+  },
+  {
+    "Table_name": "TAT Logic",
+    "Measures_Name": "Buyer cancelled(tat)",
+    "Sources": "Ordernhm, dimdate",
+    "Measures": "CALCULATE(SUMX(FILTER(Ordernhm,[Cancelled att] = \"Buyer App\"),Ordernhm[Breach]),USERELATIONSHIP(dimdate[Date],Ordernhm[Updated]))"
+  },
+  {
+    "Table_name": "TAT Logic",
+    "Measures_Name": "Logistics cancelled(tat)",
+    "Sources": "Ordernhm, dimdate",
+    "Measures": "CALCULATE(SUMX(FILTER(Ordernhm,[Cancelled att] = \"Logistics Provider\"),Ordernhm[Breach]),USERELATIONSHIP(dimdate[Date],Ordernhm[Updated]))"
+  },
+  {
+    "Table_name": "TAT Logic",
+    "Measures_Name": "inprocessnew(tat)",
+    "Sources": "Ordernhm",
+    "Measures": "CALCULATE(SUM(Ordernhm[Breach]),Ordernhm[ONDC order_status]=\"In Process\")"
+  },
+  {
+    "Table_name": "TAT Logic",
+    "Measures_Name": "total tat",
+    "Sources": "",
+    "Measures": "[Buyer cancelled(tat)] + [inprocess(tat)] + [delivered(tat)]"
+  },
+  {
+    "Table_name": "TAT Logic",
+    "Measures_Name": "TAT Adherence",
+    "Sources": "",
+    "Measures": "1-[Overall Tat breach]"
+  },
+  {
+    "Table_name": "intercity tracker",
+    "Measures_Name": "opd",
+    "Sources": "Ordernhm, dimdate",
+    "Measures": "DIVIDE([Confirmed],CALCULATE(DISTINCTCOUNT(dimdate[Date]),ALLEXCEPT(Ordernhm,Ordernhm[Date])))"
+  },
+  {
+    "Table_name": "intercity tracker",
+    "Measures_Name": "top_10_cities_opd_%",
+    "Sources": "Ordernhm",
+    "Measures": "VAR table1 = SUMMARIZE(Ordernhm,Ordernhm[Delivery City],\"OPD\",[opd])\nVAR table2 = TOPN(10,table1,[OPD],DESC)\nVAR val_1 = SUMX(table2,[OPD])\nVAR val_2 = [opd]\nRETURN\nDIVIDE(val_1,val_2,blank())"
+  },
+  {
+    "Table_name": "intercity tracker",
+    "Measures_Name": "top_10_sellers_opd_%",
+    "Sources": "Ordernhm",
+    "Measures": "VAR table1 = SUMMARIZE(Ordernhm,Ordernhm[provider key],\"OPD\",[opd])\nVAR table2 = TOPN(10,table1,[OPD],DESC)\nVAR val_1 = SUMX(table2,[OPD])\nVAR val_2 = [opd]\nRETURN\nDIVIDE(val_1,val_2,blank())"
+  },
+  {
+    "Table_name": "intercity tracker",
+    "Measures_Name": "top_10_brands_opd_%",
+    "Sources": "Ordernhm",
+    "Measures": "VAR table1 = SUMMARIZE(Ordernhm,Ordernhm[Seller Name],\"OPD\",[opd])\nVAR table2 = TOPN(10,table1,[OPD],DESC)\nVAR val_1 = SUMX(table2,[OPD])\nVAR val_2 = [opd]\nRETURN\nDIVIDE(val_1,val_2,blank())"
+  },
+  {
+    "Table_name": "Category Table",
+    "Measures_Name": "Confirmed Category",
+    "Sources": "Itemnhm",
+    "Measures": "SUM(Itemnhm[comp_key])"
+  },
+  {
+    "Table_name": "Category Table",
+    "Measures_Name": "Confirmed Sub-Category",
+    "Sources": "Itemnhm",
+    "Measures": "SUM(Itemnhm[comp-subkey])"
+  },
+  {
+    "Table_name": "Category Table",
+    "Measures_Name": "Conf Cat",
+    "Sources": "Itemnhm",
+    "Measures": "SWITCH(TRUE(),\nNOT HASONEVALUE(Itemnhm[Order Category]) && HASONEVALUE(Itemnhm[item category]),[Confirmed Category],\nHASONEVALUE(Itemnhm[Order Category]) && HASONEVALUE(Itemnhm[item category]),[Confirmed Sub-Category],\n[Confirmed Category]\n)"
+  },
+  {
+    "Table_name": "Category Table",
+    "Measures_Name": "Confirmed Items",
+    "Sources": "Itemnhm",
+    "Measures": "SUM(Itemnhm[noi_key])"
+  },
+  {
+    "Table_name": "Category Table",
+    "Measures_Name": "Delivered Items",
+    "Sources": "Itemnhm",
+    "Measures": "CALCULATE(SUM(Itemnhm[noi_key]),Itemnhm[ONDC order_status]=\"Delivered\")"
+  },
+  {
+    "Table_name": "Category Table",
+    "Measures_Name": "Cancelled Items",
+    "Sources": "Itemnhm",
+    "Measures": "CALCULATE(SUM(Itemnhm[noi_key]),Itemnhm[ONDC order_status]=\"Cancelled\")"
+  },
+  {
+    "Table_name": "Category Table",
+    "Measures_Name": "In Process Items",
+    "Sources": "Itemnhm",
+    "Measures": "CALCULATE(SUM(Itemnhm[noi_key]),Itemnhm[ONDC order_status]=\"In Process\")"
+  },
+  {
+    "Table_name": "Category Table",
+    "Measures_Name": "Delivered Category",
+    "Sources": "Itemnhm",
+    "Measures": "CALCULATE(SUM(Itemnhm[comp_key]),Itemnhm[ONDC order_status]=\"Delivered\")"
+  },
+  {
+    "Table_name": "Category Table",
+    "Measures_Name": "Delivered Sub-Category",
+    "Sources": "Itemnhm",
+    "Measures": "CALCULATE(SUM(Itemnhm[comp-subkey]),Itemnhm[ONDC order_status]=\"Delivered\")"
+  },
+  {
+    "Table_name": "Category Table",
+    "Measures_Name": "Cancelled Category",
+    "Sources": "Itemnhm",
+    "Measures": "CALCULATE(sum(Itemnhm[comp_key]),Itemnhm[ONDC order_status]=\"Cancelled\")"
+  },
+  {
+    "Table_name": "Category Table",
+    "Measures_Name": "Cancelled Sub-Category",
+    "Sources": "Itemnhm",
+    "Measures": "CALCULATE(sum(Itemnhm[comp-subkey]),Itemnhm[ONDC order_status]=\"Cancelled\")"
+  },
+  {
+    "Table_name": "Category Table",
+    "Measures_Name": "In Process Category",
+    "Sources": "Itemnhm",
+    "Measures": "CALCULATE(SUM(Itemnhm[comp_key]),Itemnhm[ONDC order_status]=\"In Process\")"
+  },
+  {
+    "Table_name": "Category Table",
+    "Measures_Name": "In Process Sub-Category",
+    "Sources": "Itemnhm",
+    "Measures": "CALCULATE(SUM(Itemnhm[comp-subkey]),Itemnhm[ONDC order_status]=\"In Process\")"
+  },
+  {
+    "Table_name": "Category Table",
+    "Measures_Name": "Del Cat",
+    "Sources": "Itemnhm",
+    "Measures": "SWITCH(TRUE(),\nNOT HASONEVALUE(Itemnhm[Order Category]) && HASONEVALUE(Itemnhm[item category]),[Delivered Category],\nHASONEVALUE(Itemnhm[Order Category]) && HASONEVALUE(Itemnhm[item category]),[Delivered Sub-Category],\n[Delivered Category]\n)"
+  },
+  {
+    "Table_name": "Category Table",
+    "Measures_Name": "Cancl Cat",
+    "Sources": "Itemnhm",
+    "Measures": "SWITCH(TRUE(),\nNOT HASONEVALUE(Itemnhm[Order Category]) && HASONEVALUE(Itemnhm[item category]),[Cancelled Category],\nHASONEVALUE(Itemnhm[Order Category]) && HASONEVALUE(Itemnhm[item category]),[Cancelled Sub-Category],\n[Cancelled Category]\n)"
+  },
+  {
+    "Table_name": "Category Table",
+    "Measures_Name": "In Proc Cat",
+    "Sources": "Itemnhm",
+    "Measures": "SWITCH(TRUE(),\nNOT HASONEVALUE(Itemnhm[Order Category]) && HASONEVALUE(Itemnhm[item category]),[In Process Category],\nHASONEVALUE(Itemnhm[Order Category]) && HASONEVALUE(Itemnhm[item category]),[In Process Sub-Category],\n[In Process Category]\n)"
+  },
+  {
+    "Table_name": "Category Table",
+    "Measures_Name": "TATadh monthly formatting",
+    "Sources": "dimdate",
+    "Measures": "var prv_adh = CALCULATE([TAT Adherence],DATEADD(dimdate[Date],-1,MONTH))\nRETURN\n[TAT Adherence]-prv_adh"
+  },
+  {
+    "Table_name": "Agri",
+    "Measures_Name": "Shipped mark",
+    "Sources": "Ordernhm",
+    "Measures": "CALCULATE(sum(Ordernhm[no_key]),Ordernhm[Shipped at]<>BLANK())",
+    "status": "done"
+  },
+  {
+    "Table_name": "Confirmed order pages",
+    "Measures_Name": "Confirmed Category daily",
+    "Sources": "",
+    "Measures": "\"Category-wise Daily Order View\""
+  },
+  {
+    "Table_name": "Confirmed order pages",
+    "Measures_Name": "Confirmed Category monthly",
+    "Sources": "",
+    "Measures": "\"Category-wise Monthly Order View\""
+  },
+  {
+    "Table_name": "Confirmed order pages",
+    "Measures_Name": "Confirmed Category weekly",
+    "Sources": "",
+    "Measures": "\"Category-wise Weekly Order View\""
+  },
+  {
+    "Table_name": "Confirmed order pages",
+    "Measures_Name": "Confirmed daily formatting",
+    "Sources": "dimdate",
+    "Measures": "var prv_conf = CALCULATE([confirmed],DATEADD(dimdate[Date],-1,DAY))\nRETURN\n[confirmed]-prv_conf"
+  },
+  {
+    "Table_name": "Confirmed order pages",
+    "Measures_Name": "Confirmed monthly formatting",
+    "Sources": "dimdate",
+    "Measures": "var prv_conf = CALCULATE([confirmed],DATEADD(dimdate[Date],-1,MONTH))\nRETURN\n[confirmed]-prv_conf"
+  },
+  {
+    "Table_name": "Confirmed order pages",
+    "Measures_Name": "Confirmed table daily",
+    "Sources": "Ordernhm",
+    "Measures": "\"Daily Order View for \" & IF(HASONEVALUE('Ordernhm'[Category]),SELECTEDVALUE('Ordernhm'[Category]), \"Multiple Categories\")"
+  },
+  {
+    "Table_name": "Confirmed order pages",
+    "Measures_Name": "Confirmed table monthly",
+    "Sources": "Ordernhm",
+    "Measures": "\"Monthly Order View for \" & IF(HASONEVALUE('Ordernhm'[Category]),SELECTEDVALUE('Ordernhm'[Category]), \"Multiple Categories\")"
+  },
+  {
+    "Table_name": "Confirmed order pages",
+    "Measures_Name": "Confirmed table weekly",
+    "Sources": "Ordernhm",
+    "Measures": "\"Weekly Order View for \" & IF(HASONEVALUE('Ordernhm'[Category]),SELECTEDVALUE('Ordernhm'[Category]), \"Multiple Categories\")"
+  },
+  {
+    "Table_name": "Confirmed order pages",
+    "Measures_Name": "Confirmed weekly formatting",
+    "Sources": "dimdate",
+    "Measures": "var prv_conf = CALCULATE([confirmed],all(dimdate),dimdate[Week Rank]=AVERAGE(dimdate[Week Rank])+1)\nRETURN\n[confirmed]-prv_conf"
+  },
+  {
+    "Table_name": "TAT Adherence pages",
+    "Measures_Name": "TATadh daily formatting",
+    "Sources": "dimdate",
+    "Measures": "var prv_adh = CALCULATE([TAT Adherence],DATEADD(dimdate[Date],-1,DAY))\nRETURN\n[TAT Adherence]-prv_adh"
+  },
+  {
+    "Table_name": "TAT Adherence pages",
+    "Measures_Name": "TATadh table daily",
+    "Sources": "Ordernhm",
+    "Measures": "\"Daily TAT Adherence View for \" & IF(HASONEVALUE('Ordernhm'[Category]),SELECTEDVALUE('Ordernhm'[Category]), \"Multiple Categories\")"
+  },
+  {
+    "Table_name": "TAT Adherence pages",
+    "Measures_Name": "TATadh table monthly",
+    "Sources": "Ordernhm",
+    "Measures": "\"Monthly TAT Adherence View for \" & IF(HASONEVALUE('Ordernhm'[Category]),SELECTEDVALUE('Ordernhm'[Category]), \"Multiple Categories\")\n1"
+  }
+]
